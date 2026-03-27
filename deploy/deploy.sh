@@ -605,20 +605,127 @@ EOF
 setup_ssl() {
     log_info "获取SSL证书..."
     
+    # 确保PKG_MANAGER已设置
+    if [ -z "$PKG_MANAGER" ] || [ "$PKG_MANAGER" = "unknown" ]; then
+        log_warning "无法确定包管理器，重新检测系统..."
+        detect_os
+    fi
+    
     # 检查certbot是否安装
     if ! command -v certbot >/dev/null 2>&1; then
-        log_error "certbot未安装，跳过SSL证书配置"
-        log_warning "请手动安装certbot并配置SSL证书"
-        return 1
+        log_warning "certbot未安装，尝试安装..."
+        
+        # 显示系统信息用于调试
+        log_info "系统信息: OS=$OS, VERSION=$VERSION, PKG_MANAGER=$PKG_MANAGER"
+        
+        case $PKG_MANAGER in
+            apt)
+                log_info "使用APT安装certbot (Debian/Ubuntu)"
+                apt install -y certbot python3-certbot-nginx
+                ;;
+            dnf|yum)
+                log_info "使用$PKG_MANAGER安装certbot (RHEL/CentOS/Fedora)"
+                # 对于CentOS/RHEL，确保EPEL仓库已启用
+                if [ "$OS" = "centos" ] || [ "$OS" = "rhel" ]; then
+                    log_info "启用EPEL仓库以获取certbot..."
+                    $PKG_MANAGER install -y epel-release
+                fi
+                $PKG_MANAGER install -y certbot python3-certbot-nginx
+                ;;
+            apk)
+                log_info "使用APK安装certbot (Alpine)"
+                apk add certbot py3-certbot-nginx
+                ;;
+            zypper)
+                log_info "使用Zypper安装certbot (openSUSE)"
+                zypper install -y certbot python3-certbot-nginx
+                ;;
+            *)
+                log_error "无法确定包管理器或系统不受支持"
+                log_warning "检测到的系统: $OS $VERSION"
+                log_warning "包管理器: $PKG_MANAGER"
+                
+                # 尝试检测常见的包管理器
+                log_info "尝试检测可用的包管理器..."
+                if command -v apt >/dev/null 2>&1; then
+                    log_info "检测到apt，尝试使用apt安装"
+                    apt install -y certbot python3-certbot-nginx
+                elif command -v yum >/dev/null 2>&1; then
+                    log_info "检测到yum，尝试使用yum安装"
+                    yum install -y epel-release
+                    yum install -y certbot python3-certbot-nginx
+                elif command -v dnf >/dev/null 2>&1; then
+                    log_info "检测到dnf，尝试使用dnf安装"
+                    dnf install -y certbot python3-certbot-nginx
+                elif command -v apk >/dev/null 2>&1; then
+                    log_info "检测到apk，尝试使用apk安装"
+                    apk add certbot py3-certbot-nginx
+                elif command -v zypper >/dev/null 2>&1; then
+                    log_info "检测到zypper，尝试使用zypper安装"
+                    zypper install -y certbot python3-certbot-nginx
+                elif command -v pacman >/dev/null 2>&1; then
+                    log_info "检测到pacman (Arch Linux)，尝试安装"
+                    pacman -S certbot certbot-nginx
+                else
+                    log_error "未找到任何支持的包管理器"
+                    echo "=========================================="
+                    echo "无法自动安装certbot，请手动安装："
+                    echo ""
+                    echo "根据您的系统，使用以下命令之一："
+                    echo "- Debian/Ubuntu: apt install certbot python3-certbot-nginx"
+                    echo "- RHEL/CentOS: yum install epel-release && yum install certbot python3-certbot-nginx"
+                    echo "- Fedora: dnf install certbot python3-certbot-nginx"
+                    echo "- Alpine: apk add certbot py3-certbot-nginx"
+                    echo "- openSUSE: zypper install certbot python3-certbot-nginx"
+                    echo "- Arch Linux: pacman -S certbot certbot-nginx"
+                    echo ""
+                    echo "或者，您可以："
+                    echo "1. 手动安装certbot后重新运行此脚本"
+                    echo "2. 跳过SSL证书配置，稍后手动配置"
+                    echo "=========================================="
+                    
+                    read -p "是否跳过SSL证书配置继续部署？(y/n): " -n 1 -r
+                    echo
+                    if [[ $REPLY =~ ^[Yy]$ ]]; then
+                        log_warning "跳过SSL证书配置，请稍后手动配置HTTPS"
+                        return 0
+                    else
+                        log_error "SSL证书配置中止，请手动安装certbot后重试"
+                        return 1
+                    fi
+                fi
+                ;;
+        esac
+        
+        # 检查安装是否成功
+        if ! command -v certbot >/dev/null 2>&1; then
+            log_error "certbot安装失败"
+            log_warning "请手动安装certbot，然后重新运行此脚本"
+            log_warning "或者跳过SSL配置，稍后手动配置HTTPS"
+            return 1
+        else
+            log_success "certbot安装成功"
+        fi
+    else
+        log_success "certbot已安装"
     fi
     
     # 获取certbot路径
     CERTBOT_PATH=$(command -v certbot)
     
+    # 检查Nginx是否已配置（监听80端口）
+    log_info "检查Nginx配置..."
+    if ! systemctl is-active --quiet nginx; then
+        log_warning "Nginx未运行，尝试启动..."
+        systemctl start nginx 2>/dev/null || log_error "无法启动Nginx，SSL证书获取可能失败"
+    fi
+    
     # 运行certbot
+    log_info "运行certbot获取SSL证书..."
     certbot --nginx -d ageniuswriter.com -d www.ageniuswriter.com --non-interactive --agree-tos
     
     # 设置自动续期
+    log_info "设置SSL证书自动续期..."
     if [ -f /etc/crontab ]; then
         echo "0 0,12 * * * root $CERTBOT_PATH renew --quiet" | tee -a /etc/crontab > /dev/null
         log_success "SSL证书自动续期已添加到crontab"
