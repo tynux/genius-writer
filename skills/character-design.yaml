@@ -1,0 +1,127 @@
+# 人物设计技能定义
+# 指导人物角色的设计和开发
+
+name: "character_design"
+command: "/design-character"
+description: "指导人物角色的设计、开发和深化，包括性格、背景、成长等"
+
+category: "design"
+complexity: "intermediate"  # beginner, intermediate, advanced
+execution_time: "medium"  # quick, medium, long
+
+parameters:
+  character_type:
+    type: "string"
+    required: true
+    description: "人物类型"
+    options: ["主角", "重要配角", "反派", "导师", "盟友", "恋人"]
+  
+  role_function:
+    type: "string"
+    required: true
+    description: "人物功能"
+    examples: ["推动情节", "展现主题", "制造冲突", "提供帮助"]
+  
+  complexity_level:
+    type: "string"
+    required: false
+    description: "复杂程度"
+    options: ["简单", "中等", "复杂"]
+    default: "中等"
+
+workflow:
+  steps:
+    - name: "概念设计"
+      description: "设计人物的基本概念和定位"
+      agents: ["creative_director", "character_designer"]
+      duration: "8分钟"
+    
+    - name: "详细设计"
+      description: "设计人物的详细属性和背景"
+      agents: ["character_designer", "psychology_expert"]
+      duration: "12分钟"
+    
+    - name: "关系设计"
+      description: "设计人物与其他角色的关系"
+      agents: ["character_designer", "plot_expert"]
+      duration: "8分钟"
+    
+    - name: "成长设计"
+      description: "设计人物的成长弧线和变化"
+      agents: ["character_designer", "literary_director"]
+      duration: "10分钟"
+    
+    - name: "审阅优化"
+      description: "审阅和优化人物设计"
+      agents: ["creative_director", "literary_director"]
+      duration: "7分钟"
+
+prompt_template: |
+  你正在使用GeniusWriter的"人物设计"技能。
+  
+  设计需求：
+  - 人物类型：{{character_type}}
+  - 人物功能：{{role_function}}
+  - 复杂程度：{{complexity_level}}
+  
+  请指导完成以下设计任务：
+  1. 设计人物的基本概念和定位
+  2. 开发人物的详细属性和背景
+  3. 设计人物与其他角色的关系
+  4. 规划人物的成长弧线和变化
+  5. 进行设计审阅和优化
+  
+  请以专业、细致的态度指导设计过程。
+
+response_format:
+  sections:
+    - name: "概念设计"
+      content: "人物的基本概念和定位设计..."
+    
+    - name: "详细属性"
+      content: "人物的详细属性和背景设计..."
+    
+    - name: "关系网络"
+      content: "人物与其他角色的关系设计..."
+    
+    - name: "成长规划"
+      content: "人物的成长弧线和变化规划..."
+    
+    - name: "设计建议"
+      content: "进一步的设计建议和注意事项..."
+
+design_elements:
+  basic_info:
+    - "姓名和称谓"
+    - "年龄和性别"
+    - "外貌特征"
+    - "基本性格"
+  
+  background:
+    - "家庭背景"
+    - "教育经历"
+    - "职业经历"
+    - "重大事件"
+  
+  personality:
+    - "核心价值观"
+    - "性格优点"
+    - "性格缺点"
+    - "情感模式"
+  
+  abilities:
+    - "专业技能"
+    - "特殊才能"
+    - "知识领域"
+    - "弱点限制"
+  
+  development:
+    - "初始状态"
+    - "成长目标"
+    - "转变契机"
+    - "最终状态"
+
+version: "1.0"
+created: "2026-03-27"
+updated: "2026-03-27"
+author: "GeniusWriter System"

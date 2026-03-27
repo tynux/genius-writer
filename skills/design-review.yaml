@@ -1,0 +1,167 @@
+# 设计审阅技能定义
+# 对小说设计进行全面审阅和优化
+
+name: "design_review"
+command: "/review-design"
+description: "对小说的人物设计、情节结构、世界观等进行全面审阅和优化建议"
+
+category: "review"
+complexity: "intermediate"  # beginner, intermediate, advanced
+execution_time: "medium"  # quick, medium, long
+
+parameters:
+  novel_id:
+    type: "string"
+    required: true
+    description: "小说项目ID"
+  
+  review_focus:
+    type: "string"
+    required: false
+    description: "审阅重点"
+    options: ["人物设计", "情节结构", "世界观", "文学质量", "整体平衡"]
+    default: "整体平衡"
+  
+  review_depth:
+    type: "string"
+    required: false
+    description: "审阅深度"
+    options: ["快速审阅", "标准审阅", "深度审阅"]
+    default: "标准审阅"
+
+workflow:
+  steps:
+    - name: "设计文档收集"
+      description: "收集所有相关的设计文档"
+      agents: ["producer"]
+      duration: "2分钟"
+    
+    - name: "专项审阅"
+      description: "各领域专家进行专项审阅"
+      agents: ["character_designer", "plot_designer", "world_builder", "literary_director"]
+      duration: "15分钟"
+    
+    - name: "综合评估"
+      description: "综合各专项审阅结果"
+      agents: ["creative_director", "producer"]
+      duration: "5分钟"
+    
+    - name: "优化建议生成"
+      description: "生成具体的优化建议"
+      agents: ["creative_director", "literary_director"]
+      duration: "8分钟"
+
+prompt_template: |
+  你正在使用GeniusWriter的"设计审阅"技能。
+  
+  审阅信息：
+  - 小说项目：{{novel_id}}
+  - 审阅重点：{{review_focus}}
+  - 审阅深度：{{review_depth}}
+  
+  请完成以下审阅任务：
+  1. 收集和分析现有的设计文档
+  2. 根据审阅重点进行专项评估
+  3. 识别设计中的优点和问题
+  4. 提供具体可行的优化建议
+  5. 生成综合审阅报告
+  
+  请以专业、客观的态度进行审阅。
+
+response_format:
+  sections:
+    - name: "审阅概述"
+      content: "本次设计审阅的概述和范围..."
+    
+    - name: "专项评估结果"
+      content: "各领域专家的专项评估结果..."
+    
+    - name: "主要发现"
+      content: "审阅中发现的主要优点和问题..."
+    
+    - name: "优化建议"
+      content: "针对发现问题的具体优化建议..."
+    
+    - name: "优先级建议"
+      content: "建议的优化优先级和实施计划..."
+
+quality_metrics:
+  character_design:
+    - "人物一致性"
+    - "性格鲜明度"
+    - "成长弧线"
+    - "关系网络"
+  
+  plot_structure:
+    - "逻辑合理性"
+    - "节奏控制"
+    - "冲突设计"
+    - "悬念设置"
+  
+  world_building:
+    - "世界一致性"
+    - "文化深度"
+    - "物理规则"
+    - "历史背景"
+  
+  literary_quality:
+    - "语言表达"
+    - "文学性"
+    - "情感冲击"
+    - "思想深度"
+
+example_review_report: |
+  # 设计审阅报告
+  
+  ## 项目概述
+  小说：《星际漫游者》
+  作者：张三
+  审阅日期：2026-03-27
+  
+  ## 专项评估结果
+  
+  ### 人物设计（评分：8.5/10）
+  优点：
+  - 主角性格鲜明，动机明确
+  - 配角有一定特色
+  
+  问题：
+  - 部分配角性格较为扁平
+  - 人物关系网络可以更丰富
+  
+  ### 情节结构（评分：7.5/10）
+  优点：
+  - 主线清晰，目标明确
+  - 有几个精彩的转折点
+  
+  问题：
+  - 中间部分节奏较慢
+  - 部分支线情节与主线关联度不高
+  
+  ## 优化建议
+  
+  ### 高优先级
+  1. 丰富配角性格，增加人物弧线
+  2. 调整中间部分节奏，增加小高潮
+  
+  ### 中优先级
+  3. 优化支线情节与主线的关联
+  4. 加强世界观细节描写
+  
+  ### 低优先级
+  5. 优化部分对话的表达方式
+  6. 增加更多文化元素融入
+  
+  ## 实施建议
+  建议分三个阶段实施优化，预计需要2-3周时间。
+
+integration_points:
+  - "与创作工作流集成"
+  - "支持迭代优化"
+  - "生成可跟踪的任务"
+  - "支持团队协作审阅"
+
+version: "1.0"
+created: "2026-03-27"
+updated: "2026-03-27"
+author: "GeniusWriter System"

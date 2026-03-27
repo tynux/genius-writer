@@ -1,0 +1,221 @@
+# 章节创作技能定义
+# 指导具体章节的创作过程
+
+name: "write_chapter"
+command: "/write-chapter"
+description: "指导具体章节的创作，包括情节安排、场景描写、对话创作等"
+
+category: "writing"
+complexity: "intermediate"  # beginner, intermediate, advanced
+execution_time: "long"  # quick, medium, long
+
+parameters:
+  chapter_number:
+    type: "number"
+    required: true
+    description: "章节编号"
+    min: 1
+  
+  chapter_title:
+    type: "string"
+    required: false
+    description: "章节标题"
+  
+  chapter_objectives:
+    type: "array"
+    required: true
+    description: "本章节目标"
+    items:
+      type: "string"
+    examples: ["引入新角色", "推进主线情节", "展现人物成长", "制造关键转折"]
+  
+  target_word_count:
+    type: "number"
+    required: false
+    description: "目标字数"
+    min: 500
+    max: 10000
+    default: 3000
+
+workflow:
+  steps:
+    - name: "章节规划"
+      description: "规划章节的具体内容和结构"
+      agents: ["plot_expert", "character_designer"]
+      duration: "10分钟"
+    
+    - name: "场景设计"
+      description: "设计章节中的场景和氛围"
+      agents: ["scene_expert", "world_builder"]
+      duration: "8分钟"
+    
+    - name: "对话创作"
+      description: "创作章节中的人物对话"
+      agents: ["dialogue_expert", "character_designer"]
+      duration: "12分钟"
+    
+    - name: "心理描写"
+      description: "创作人物的心理活动和情感"
+      agents: ["psychology_expert"]
+      duration: "8分钟"
+    
+    - name: "动作描写"
+      description: "创作动作场景和身体语言"
+      agents: ["action_expert"]
+      duration: "6分钟"
+    
+    - name: "初稿整合"
+      description: "整合各部分的创作，形成初稿"
+      agents: ["creative_director", "producer"]
+      duration: "10分钟"
+    
+    - name: "润色优化"
+      description: "对初稿进行润色和优化"
+      agents: ["polishing_expert", "format_expert", "literary_culture_expert"]
+      duration: "15分钟"
+
+prompt_template: |
+  你正在使用GeniusWriter的"章节创作"技能。
+  
+  创作信息：
+  - 章节编号：第{{chapter_number}}章
+  - 章节标题：{{chapter_title}}
+  - 章节目标：{{chapter_objectives}}
+  - 目标字数：{{target_word_count}}字
+  
+  请指导完成以下创作任务：
+  1. 规划章节的具体内容和结构
+  2. 设计场景、对话、心理、动作等要素
+  3. 协调各领域专家进行专业创作
+  4. 整合各部分内容形成完整章节
+  5. 进行润色优化，确保质量
+  
+  请以专业、细致的态度指导创作过程。
+
+response_format:
+  sections:
+    - name: "章节规划方案"
+      content: "本章节的整体规划和结构安排..."
+    
+    - name: "场景设计"
+      content: "本章节的主要场景设计和氛围营造..."
+    
+    - name: "对话创作指导"
+      content: "人物对话的创作要点和注意事项..."
+    
+    - name: "心理描写重点"
+      content: "心理活动描写的重点和深度..."
+    
+    - name: "动作设计"
+      content: "动作场景的设计和节奏控制..."
+    
+    - name: "初稿内容"
+      content: "整合后的章节初稿内容..."
+    
+    - name: "润色建议"
+      content: "对初稿的润色和优化建议..."
+
+chapter_structure_template:
+  opening:
+    description: "章节开篇"
+    functions: ["吸引读者", "建立场景", "引入本章主题"]
+    typical_length: "10-20%"
+  
+  development:
+    description: "情节发展"
+    functions: ["推进情节", "展现冲突", "人物互动"]
+    typical_length: "50-60%"
+  
+  climax:
+    description: "章节高潮"
+    functions: ["情感高潮", "关键转折", "重要揭示"]
+    typical_length: "20-25%"
+  
+  resolution:
+    description: "收尾过渡"
+    functions: ["解决本章冲突", "为下章铺垫", "人物反思"]
+    typical_length: "10-15%"
+
+quality_checkpoints:
+  structure_check:
+    - "章节结构是否合理"
+    - "节奏控制是否得当"
+    - "各部分比例是否平衡"
+  
+  content_check:
+    - "是否达成章节目标"
+    - "情节推进是否合理"
+    - "人物表现是否一致"
+  
+  expression_check:
+    - "语言表达是否流畅"
+    - "描写是否生动具体"
+    - "情感传达是否有效"
+  
+  technical_check:
+    - "格式是否正确规范"
+    - "标点使用是否准确"
+    - "逻辑是否清晰连贯"
+
+example_chapter_plan: |
+  # 第15章创作计划
+  
+  ## 章节信息
+  - 标题：真相的代价
+  - 目标字数：3500字
+  - 主要目标：揭示关键真相，展现主角的内心挣扎
+  
+  ## 结构安排
+  
+  ### 开篇（约400字）
+  - 场景：主角独自在书房
+  - 氛围：紧张、沉思
+  - 功能：建立本章情绪基调
+  
+  ### 发展（约1800字）
+  - 关键事件：收到匿名信，揭示家族秘密
+  - 人物反应：震惊、怀疑、愤怒
+  - 情节推进：主角开始调查真相
+  
+  ### 高潮（约800字）
+  - 冲突：与家族长辈对峙
+  - 情感：愤怒、背叛、失望
+  - 揭示：完整真相的展现
+  
+  ### 收尾（约500字）
+  - 人物反思：对家族和自我的重新认识
+  - 未来暗示：主角将如何应对
+  - 下章铺垫：新的挑战即将到来
+  
+  ## 专家分工
+  
+  ### 场景专家
+  - 重点：书房氛围、对峙场景的紧张感
+  
+  ### 对话专家
+  - 重点：对峙对话的冲突和张力的潜台词
+  
+  ### 心理专家
+  - 重点：主角从震惊到愤怒到反思的心理过程
+  
+  ### 动作专家
+  - 重点：对峙时的身体语言和动作反应
+  
+  ## 预计创作时间：约2小时
+
+collaboration_guidelines:
+  - "各专家在规划阶段充分沟通"
+  - "保持创作方向的一致性"
+  - "及时解决创作中的冲突"
+  - "定期进行进度同步"
+
+integration_points:
+  - "与整体小说大纲集成"
+  - "支持章节版本管理"
+  - "生成创作进度报告"
+  - "支持团队协作创作"
+
+version: "1.0"
+created: "2026-03-27"
+updated: "2026-03-27"
+author: "GeniusWriter System"

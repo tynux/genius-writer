@@ -1,0 +1,128 @@
+# 世界观构建技能定义
+# 指导故事世界的设计和构建
+
+name: "world_building"
+command: "/build-world"
+description: "指导故事世界的设计、构建和深化，包括地理、历史、文化、社会等"
+
+category: "design"
+complexity: "advanced"  # beginner, intermediate, advanced
+execution_time: "long"  # quick, medium, long
+
+parameters:
+  world_type:
+    type: "string"
+    required: true
+    description: "世界类型"
+    options: ["现实世界", "历史世界", "奇幻世界", "科幻世界", "混合世界"]
+  
+  scale_level:
+    type: "string"
+    required: false
+    description: "构建规模"
+    options: ["局部", "国家", "大陆", "世界", "宇宙"]
+    default: "国家"
+  
+  detail_level:
+    type: "string"
+    required: false
+    description: "详细程度"
+    options: ["基础", "中等", "详细"]
+    default: "中等"
+
+workflow:
+  steps:
+    - name: "概念设计"
+      description: "设计世界的基本概念和基调"
+      agents: ["creative_director", "world_builder"]
+      duration: "10分钟"
+    
+    - name: "物理构建"
+      description: "构建世界的物理环境和规则"
+      agents: ["world_builder", "scene_expert"]
+      duration: "15分钟"
+    
+    - name: "社会构建"
+      description: "构建世界的社会结构和文化"
+      agents: ["world_builder", "literary_culture_expert"]
+      duration: "15分钟"
+    
+    - name: "历史构建"
+      description: "构建世界的历史发展和变迁"
+      agents: ["world_builder", "literary_culture_expert"]
+      duration: "12分钟"
+    
+    - name: "整合审阅"
+      description: "整合各部分构建，进行审阅"
+      agents: ["creative_director", "literary_director", "producer"]
+      duration: "10分钟"
+
+prompt_template: |
+  你正在使用GeniusWriter的"世界观构建"技能。
+  
+  构建需求：
+  - 世界类型：{{world_type}}
+  - 构建规模：{{scale_level}}
+  - 详细程度：{{detail_level}}
+  
+  请指导完成以下构建任务：
+  1. 设计世界的基本概念和基调
+  2. 构建世界的物理环境和规则
+  3. 构建世界的社会结构和文化
+  4. 构建世界的历史发展和变迁
+  5. 整合各部分构建，进行审阅优化
+  
+  请以系统、细致的态度指导构建过程。
+
+response_format:
+  sections:
+    - name: "概念设计"
+      content: "世界的基本概念和基调设计..."
+    
+    - name: "物理环境"
+      content: "世界的物理环境和规则构建..."
+    
+    - name: "社会结构"
+      content: "世界的社会结构和文化构建..."
+    
+    - name: "历史发展"
+      content: "世界的历史发展和变迁构建..."
+    
+    - name: "整合展示"
+      content: "世界观的整合展示和应用建议..."
+
+worldbuilding_elements:
+  physical_world:
+    - "地理环境"
+    - "气候条件"
+    - "自然资源"
+    - "物种生态"
+  
+  magical_technological:
+    - "魔法/科技体系"
+    - "能力规则"
+    - "能量来源"
+    - "限制条件"
+  
+  social_structure:
+    - "政治制度"
+    - "经济体系"
+    - "社会阶层"
+    - "文化习俗"
+  
+  cultural_aspects:
+    - "语言文字"
+    - "宗教信仰"
+    - "艺术表达"
+    - "价值观念"
+  
+  historical_context:
+    - "历史事件"
+    - "时代变迁"
+    - "重要人物"
+    - "当前局势"
+
+version: "1.0"
+created: "2026-03-27"
+updated: "2026-03-27"
+author: "GeniusWriter System"

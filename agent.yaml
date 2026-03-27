@@ -1,0 +1,267 @@
+# GeniusWriter 智能体系统配置文件
+# 参考Claude Code Game Studios架构设计
+
+system:
+  name: "GeniusWriter"
+  version: "1.0.0"
+  description: "AI小说创作智能体协调系统"
+  author: "GeniusWriter Team"
+  created_at: "2026-03-27"
+
+paths:
+  agents: "agents"
+  skills: "skills"
+  workflows: "workflows"
+  templates: "templates"
+  data: "data"
+
+model_defaults:
+  temperature: 0.7
+  max_tokens: 4000
+  model: "gpt-4"
+  fallback_models: ["deepseek-chat", "claude-3"]
+
+agent_tiers:
+  tier1:
+    name: "总监层"
+    description: "负责整体创意方向、文学质量和项目管理"
+    agents:
+      - creative_director
+      - literary_director
+      - producer
+  
+  tier2:
+    name: "部门主管层"
+    description: "负责具体的设计和规划工作"
+    agents:
+      - plot_designer
+      - character_designer
+      - world_designer
+      - style_editor
+  
+  tier3:
+    name: "专家层"
+    description: "负责专业领域的创作和咨询"
+    agents:
+      - dialogue_expert
+      - scene_expert
+      - polishing_expert
+      - format_expert
+      - plot_expert
+      - psychology_expert
+      - action_expert
+      - literary_culture_expert
+
+workflow_presets:
+  novel_creation:
+    name: "完整小说创作"
+    description: "从概念到完成的完整小说创作流程"
+    steps:
+      - config_novel
+      - generate_outline
+      - design_characters
+      - plan_chapters
+      - write_chapters
+      - review_edit
+      - finalize_export
+  
+  quick_chapter:
+    name: "快速章节创作"
+    description: "基于现有大纲快速创作单个章节"
+    steps:
+      - load_context
+      - generate_chapter
+      - consistency_check
+      - style_refine
+  
+  outline_only:
+    name: "仅生成大纲"
+    description: "只生成小说大纲，不进行具体创作"
+    steps:
+      - config_novel
+      - generate_outline
+      - refine_outline
+
+skill_categories:
+  planning:
+    - start_novel
+    - design_review
+    - plot_plan
+    - character_develop
+  
+  writing:
+    - write_chapter
+    - continue_writing
+    - improve_style
+    - add_dialogue
+  
+  editing:
+    - review_text
+    - check_consistency
+    - refine_language
+    - fix_errors
+  
+  management:
+    - project_status
+    - progress_report
+    - resource_alloc
+    - team_coordinate
+
+novel_genres:
+  - name: "历史"
+    description: "历史背景的小说，注重时代真实性和历史细节"
+    experts: ["literary_culture_expert", "scene_expert", "dialogue_expert"]
+    default_style: "文学性"
+    
+  - name: "科幻"
+    description: "科幻题材的小说，注重科技设定和未来想象"
+    experts: ["scene_expert", "plot_expert", "literary_culture_expert"]
+    default_style: "通俗性"
+    
+  - name: "奇幻"
+    description: "奇幻题材的小说，注重魔法体系和奇幻世界"
+    experts: ["scene_expert", "world_designer", "literary_culture_expert"]
+    default_style: "通俗性"
+    
+  - name: "都市"
+    description: "现代都市背景的小说，注重现实生活和情感描写"
+    experts: ["dialogue_expert", "psychology_expert", "action_expert"]
+    default_style: "网络文学"
+    
+  - name: "悬疑"
+    description: "悬疑推理类小说，注重谜题设计和逻辑推理"
+    experts: ["plot_expert", "psychology_expert", "scene_expert"]
+    default_style: "通俗性"
+    
+  - name: "言情"
+    description: "爱情题材的小说，注重情感描写和人物关系"
+    experts: ["dialogue_expert", "psychology_expert", "scene_expert"]
+    default_style: "通俗性"
+    
+  - name: "武侠"
+    description: "武侠题材的小说，注重武功描写和江湖文化"
+    experts: ["action_expert", "scene_expert", "literary_culture_expert"]
+    default_style: "传统文学"
+    
+  - name: "军事"
+    description: "军事题材的小说，注重战略战术和战争描写"
+    experts: ["action_expert", "scene_expert", "plot_expert"]
+    default_style: "文学性"
+
+writing_styles:
+  - name: "文学性"
+    description: "偏传统文学的写作风格，注重文学性和艺术性"
+    characteristics: ["丰富的描写", "复杂的句式", "文学修辞", "深刻主题"]
+    
+  - name: "通俗性"
+    description: "适合大众阅读的写作风格，注重可读性和娱乐性"
+    characteristics: ["简洁明快", "对话丰富", "情节紧凑", "易于理解"]
+    
+  - name: "网络文学"
+    description: "网络小说常见的写作风格，注重更新速度和读者互动"
+    characteristics: ["章节短小", "节奏快速", "爽点密集", "互动性强"]
+    
+  - name: "传统文学"
+    description: "传统文学的写作风格，注重深度和思想性"
+    characteristics: ["结构严谨", "人物深刻",  "主题严肃", "语言精致"]
+    
+  - name: "轻小说风"
+    description: "轻小说风格的写作，注重轻松幽默和二次元元素"
+    characteristics: ["轻松幽默", "对话主导", "萌元素", "青春气息"]
+
+output_formats:
+  - format: "markdown"
+    extension: ".md"
+    description: "Markdown格式，适合后续编辑和发布"
+    features: ["纯文本", "轻量级", "兼容性好"]
+    
+  - format: "word"
+    extension: ".docx"
+    description: "Microsoft Word文档格式"
+    features: ["格式丰富", "打印友好", "广泛兼容"]
+    
+  - format: "pdf"
+    extension: ".pdf"
+    description: "PDF文档格式，适合分享和打印"
+    features: ["固定格式", "跨平台", "打印优化"]
+    
+  - format: "html"
+    extension: ".html"
+    description: "HTML网页格式，适合在线发布"
+    features: ["网页兼容", "交互性强", "多媒体支持"]
+    
+  - format: "epub"
+    extension: ".epub"
+    description: "电子书格式，适合电子阅读器"
+    features: ["自适应布局",  "阅读友好", "设备兼容"]
+
+api_config:
+  openai:
+    base_url: "https://api.openai.com/v1"
+    models:
+      - "gpt-4"
+      - "gpt-4-turbo"
+      - "gpt-3.5-turbo"
+    rate_limit: 60  # 每分钟请求数
+  
+  deepseek:
+    base_url: "https://api.deepseek.com/v1"
+    models:
+      - "deepseek-chat"
+      - "deepseek-reasoner"
+    rate_limit: 120
+  
+  claude:
+    base_url: "https://api.anthropic.com/v1"
+    models:
+      - "claude-3-opus"
+      - "claude-3-sonnet"
+      - "claude-3-haiku"
+    rate_limit: 30
+
+database:
+  type: "sqlite"
+  path: "data/genius_writer.db"
+  tables:
+    - name: "novels"
+      description: "小说项目表"
+    - name: "chapters"
+      description: "章节内容表"
+    - name: "agents"
+      description: "代理状态表"
+    - name: "workflows"
+      description: "工作流记录表"
+
+logging:
+  level: "INFO"
+  file: "logs/genius_writer.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  max_size: 10485760  # 10MB
+  backup_count: 5
+
+web_server:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  static_folder: "static"
+  template_folder: "templates"
+  secret_key: "genius-writer-secret-key-change-in-production"
+
+default_limits:
+  max_chapters: 100
+  max_words_per_chapter: 10000
+  max_total_words: 1000000
+  max_concurrent_workflows: 5
+  max_agents_per_workflow: 10
+  max_api_calls_per_minute: 60
+
+feature_flags:
+  enable_agent_coordination: true
+  enable_multi_model: true
+  enable_real_time_updates: true
+  enable_export_all_formats: true
+  enable_version_control: false  # 未来功能
+  enable_collaborative_editing: false  # 未来功能
+
+version: "1.0.0"
+last_updated: "2026-03-27"

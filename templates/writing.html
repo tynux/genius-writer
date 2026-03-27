@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创作 - GeniusWriter</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <i class="fas fa-book-open"></i>
+                <span>GeniusWriter</span>
+            </a>
+            <div class="nav-links">
+                <a href="/"><i class="fas fa-home"></i> 首页</a>
+                <a href="/config"><i class="fas fa-cog"></i> 配置</a>
+                <a href="/writing" class="active"><i class="fas fa-pen"></i> 创作</a>
+                <a href="#" id="export-btn"><i class="fas fa-download"></i> 导出</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container writing-container">
+        <!-- 创作控制面板 -->
+        <div class="writing-controls">
+            <div class="controls-header">
+                <h1><i class="fas fa-pen-nib"></i> 小说创作控制台</h1>
+                <div class="controls-actions">
+                    <button id="pause-creation" class="btn btn-warning">
+                        <i class="fas fa-pause"></i> 暂停
+                    </button>
+                    <button id="resume-creation" class="btn btn-success" style="display: none;">
+                        <i class="fas fa-play"></i> 继续
+                    </button>
+                    <button id="stop-creation" class="btn btn-danger">
+                        <i class="fas fa-stop"></i> 停止
+                    </button>
+                </div>
+            </div>
+
+            <!-- 创作状态 -->
+            <div class="creation-status">
+                <div class="status-overview">
+                    <div class="status-item">
+                        <span class="status-label">当前状态：</span>
+                        <span class="status-value" id="current-status">等待开始</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">进度：</span>
+                        <span class="status-value">
+                            <span id="progress-percent">0%</span>
+                            <span id="progress-text">(0/0章)</span>
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">已创作字数：</span>
+                        <span class="status-value" id="total-words">0字</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">当前代理：</span>
+                        <span class="status-value" id="current-agent">无</span>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="writing-grid">
+            <!-- 左侧：创作主区域 -->
+            <div class="writing-main">
+                <!-- 小说大纲 -->
+                <div class="writing-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-map"></i> 小说大纲</h2>
+                        <button id="regenerate-outline" class="btn btn-secondary">
+                            <i class="fas fa-redo"></i> 重新生成
+                        </button>
+                    </div>
+                    <div class="outline-content" id="outline-content">
+                        <div class="loading-placeholder">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>正在生成小说大纲...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 当前章节 -->
+                <div class="writing-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-file-alt"></i> 当前章节</h2>
+                        <div class="chapter-controls">
+                            <span class="chapter-info">
+                                第 <span id="current-chapter-number">0</span> 章：
+                                <span id="current-chapter-title">等待生成</span>
+                            </span>
+                            <button id="write-chapter" class="btn btn-primary">
+                                <i class="fas fa-magic"></i> 生成本章
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chapter-editor">
+                        <div class="editor-toolbar">
+                            <button class="tool-btn" data-action="format" data-format="bold">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button class="tool-btn" data-action="format" data-format="italic">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button class="tool-btn" data-action="format" data-format="heading">
+                                <i class="fas fa-heading"></i>
+                            </button>
+                            <button class="tool-btn" data-action="save-chapter">
+                                <i class="fas fa-save"></i> 保存
+                            </button>
+                            <button class="tool-btn" data-action="regenerate-chapter">
+                                <i class="fas fa-redo"></i> 重写
+                            </button>
+                        </div>
+                        <textarea id="chapter-content" placeholder="本章内容将在这里显示..."></textarea>
+                        <div class="editor-stats">
+                            <span>字数：<span id="chapter-word-count">0</span>字</span>
+                            <span>目标：<span id="chapter-target-words">3000</span>字</span>
+                            <span>状态：<span id="chapter-status">未开始</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 章节导航 -->
+                <div class="writing-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-list-ol"></i> 章节导航</h2>
+                    </div>
+                    <div class="chapter-navigation">
+                        <div class="chapter-list" id="chapter-list">
+                            <!-- 通过JS动态加载章节列表 -->
+                        </div>
+                        <div class="navigation-controls">
+                            <button id="prev-chapter" class="btn btn-secondary" disabled>
+                                <i class="fas fa-chevron-left"></i> 上一章
+                            </button>
+                            <button id="next-chapter" class="btn btn-secondary">
+                                下一章 <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button id="jump-to-chapter" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> 跳转到
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：智能体控制台 -->
+            <div class="writing-sidebar">
+                <!-- 智能体活动 -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-robot"></i> 智能体活动</h3>
+                        <button id="toggle-agent-log" class="btn-icon">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                    <div class="agent-activity">
+                        <div class="activity-log" id="agent-activity-log">
+                            <div class="activity-item">
+                                <div class="activity-time">[09:45]</div>
+                                <div class="activity-content">系统初始化完成，等待创作指令</div>
+                            </div>
+                        </div>
+                        <div class="agent-status">
+                            <div class="agent-status-item">
+                                <span class="agent-name">创意总监</span>
+                                <span class="agent-state idle">空闲</span>
+                            </div>
+                            <div class="agent-status-item">
+                                <span class="agent-name">情节设计师</span>
+                                <span class="agent-state idle">空闲</span>
+                            </div>
+                            <div class="agent-status-item">
+                                <span class="agent-name">历史专家</span>
+                                <span class="agent-state idle">空闲</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 创作统计 -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-chart-bar"></i> 创作统计</h3>
+                    </div>
+                    <div class="creation-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">已创作章节</div>
+                            <div class="stat-value" id="stats-chapters-done">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">总字数</div>
+                            <div class="stat-value" id="stats-total-words">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">平均每章</div>
+                            <div class="stat-value" id="stats-avg-words">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">创作时间</div>
+                            <div class="stat-value" id="stats-creation-time">0分钟</div>
+                        </div>
+                    </div>
+                    <div class="stat-chart">
+                        <canvas id="word-count-chart" width="300" height="150"></canvas>
+                    </div>
+                </div>
+
+                <!-- 质量控制 -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-check-circle"></i> 质量控制</h3>
+                        <button id="run-quality-check" class="btn btn-primary btn-small">
+                            <i class="fas fa-play"></i> 检查
+                        </button>
+                    </div>
+                    <div class="quality-control">
+                        <div class="quality-item">
+                            <span class="quality-label">情节连贯性</span>
+                            <div class="quality-score">
+                                <div class="score-bar">
+                                    <div class="score-fill" style="width: 0%;"></div>
+                                </div>
+                                <span class="score-value">0%</span>
+                            </div>
+                        </div>
+                        <div class="quality-item">
+                            <span class="quality-label">人物一致性</span>
+                            <div class="quality-score">
+                                <div class="score-bar">
+                                    <div class="score-fill" style="width: 0%;"></div>
+                                </div>
+                                <span class="score-value">0%</span>
+                            </div>
+                        </div>
+                        <div class="quality-item">
+                            <span class="quality-label">语言质量</span>
+                            <div class="quality-score">
+                                <div class="score-bar">
+                                    <div class="score-fill" style="width: 0%;"></div>
+                                </div>
+                                <span class="score-value">0%</span>
+                            </div>
+                        </div>
+                        <div class="quality-item">
+                            <span class="quality-label">风格统一性</span>
+                            <div class="quality-score">
+                                <div class="score-bar">
+                                    <div class="score-fill" style="width: 0%;"></div>
+                                </div>
+                                <span class="score-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快速操作 -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-bolt"></i> 快速操作</h3>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" data-action="generate-summary">
+                            <i class="fas fa-file-contract"></i>
+                            <span>生成摘要</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="review-chapter">
+                            <i class="fas fa-search"></i>
+                            <span>审阅本章</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="improve-style">
+                            <i class="fas fa-paint-brush"></i>
+                            <span>优化文笔</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="suggest-continuation">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>续写建议</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="check-consistency">
+                            <i class="fas fa-link"></i>
+                            <span>连贯性检查</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="export-current">
+                            <i class="fas fa-download"></i>
+                            <span>导出本章</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 系统消息 -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-comment-alt"></i> 系统消息</h3>
+                        <button id="clear-messages" class="btn-icon">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="system-messages" id="system-messages">
+                        <div class="message-item info">
+                            <i class="fas fa-info-circle"></i>
+                            <div class="message-content">欢迎使用GeniusWriter创作系统！</div>
+                        </div>
+                        <div class="message-item tip">
+                            <i class="fas fa-lightbulb"></i>
+                            <div class="message-content">建议先完成小说大纲，再开始章节创作。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模态框：章节详情 -->
+        <div id="chapter-detail-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-file-alt"></i> 章节详情</h3>
+                    <button class="close-modal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chapter-detail-content">
+                        加载中...
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">关闭</button>
+                    <button class="btn btn-primary" id="edit-chapter-detail">
+                        <i class="fas fa-edit"></i> 编辑
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模态框：导出选项 -->
+        <div id="export-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-download"></i> 导出选项</h3>
+                    <button class="close-modal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="export-options">
+                        <div class="export-option">
+                            <input type="radio" name="export-format" id="export-markdown" value="markdown" checked>
+                            <label for="export-markdown">
+                                <i class="fab fa-markdown"></i>
+                                <div>
+                                    <strong>Markdown (.md)</strong>
+                                    <small>纯文本格式，适合后续编辑</small>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="export-option">
+                            <input type="radio" name="export-format" id="export-word" value="word">
+                            <label for="export-word">
+                                <i class="fas fa-file-word"></i>
+                                <div>
+                                    <strong>Word文档 (.docx)</strong>
+                                    <small>Microsoft Word格式</small>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="export-option">
+                            <input type="radio" name="export-format" id="export-pdf" value="pdf">
+                            <label for="export-pdf">
+                                <i class="fas fa-file-pdf"></i>
+                                <div>
+                                    <strong>PDF文档 (.pdf)</strong>
+                                    <small>适合打印和分享</small>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="export-option">
+                            <input type="radio" name="export-format" id="export-html" value="html">
+                            <label for="export-html">
+                                <i class="fab fa-html5"></i>
+                                <div>
+                                    <strong>HTML网页 (.html)</strong>
+                                    <small>网页格式，适合在线发布</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="export-settings">
+                        <div class="form-group">
+                            <label for="export-filename">文件名</label>
+                            <input type="text" id="export-filename" placeholder="我的小说">
+                        </div>
+                        <div class="form-group">
+                            <label for="export-include">包含内容</label>
+                            <div class="checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="include-outline" checked>
+                                    小说大纲
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="include-all-chapters" checked>
+                                    所有章节
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="include-metadata" checked>
+                                    元数据（作者、日期等）
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">取消</button>
+                    <button class="btn btn-primary" id="confirm-export">
+                        <i class="fas fa-download"></i> 开始导出
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4><i class="fas fa-book-open"></i> GeniusWriter</h4>
+                    <p>基于Claude Game Studios架构的AI小说创作平台</p>
+                </div>
+                <div class="footer-section">
+                    <h4>创作状态</h4>
+                    <div id="creation-status-summary">
+                        未开始创作
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>系统资源</h4>
+                    <div class="resource-usage">
+                        <div>内存：<span id="memory-usage">...</span></div>
+                        <div>API调用：<span id="api-calls">0</span>次</div>
+                        <div>运行时间：<span id="uptime">0分钟</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/writing.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>

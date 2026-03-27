@@ -1,0 +1,163 @@
+# 开始创作技能定义
+# 引导式小说创作入门，根据用户起始点自适应
+
+name: "start_novel"
+command: "/start"
+description: "引导式小说创作入门，根据用户起始点自适应，帮助用户快速开始创作旅程"
+
+category: "planning"
+complexity: "beginner"  # beginner, intermediate, advanced
+execution_time: "medium"  # quick, medium, long
+
+parameters:
+  genre:
+    type: "string"
+    required: true
+    description: "小说类型"
+    options: ["历史", "科幻", "奇幻", "都市", "悬疑", "武侠", "言情", "军事", "玄幻", "轻小说"]
+    default: "都市"
+  
+  theme:
+    type: "string"
+    required: false
+    description: "故事主题或核心概念"
+    examples: ["成长与冒险", "爱情与牺牲", "正义与复仇", "科技与人性"]
+  
+  target_length:
+    type: "number"
+    required: false
+    description: "目标总字数"
+    min: 10000
+    max: 1000000
+    default: 100000
+  
+  experience_level:
+    type: "string"
+    required: false
+    description: "用户创作经验水平"
+    options: ["新手", "有一定经验", "经验丰富"]
+    default: "新手"
+
+workflow:
+  steps:
+    - name: "需求分析"
+      description: "分析用户需求和起始条件"
+      agents: ["producer", "creative_director"]
+      duration: "5分钟"
+    
+    - name: "概念引导"
+      description: "引导用户完善故事概念"
+      agents: ["creative_director", "literary_director"]
+      duration: "10分钟"
+    
+    - name: "规划建议"
+      description: "提供创作规划建议"
+      agents: ["producer", "plot_designer"]
+      duration: "10分钟"
+    
+    - name: "资源准备"
+      description: "准备创作所需资源"
+      agents: ["producer", "character_designer", "world_builder"]
+      duration: "5分钟"
+
+prompt_template: |
+  你正在使用GeniusWriter的"开始创作"技能。
+  
+  用户信息：
+  - 小说类型：{{genre}}
+  - 主题概念：{{theme}}
+  - 目标字数：{{target_length}}字
+  - 经验水平：{{experience_level}}
+  
+  请完成以下任务：
+  1. 欢迎用户并了解具体需求
+  2. 根据类型和经验水平提供个性化引导
+  3. 帮助用户完善故事概念
+  4. 提供创作路线图建议
+  5. 推荐适合的智能体团队
+  
+  请以友好、专业的态度进行引导。
+
+response_format:
+  sections:
+    - name: "欢迎和确认"
+      content: "欢迎使用GeniusWriter！让我先了解一下您的创作需求..."
+    
+    - name: "概念深化"
+      content: "基于您提供的信息，我建议从以下几个方面深化故事概念..."
+    
+    - name: "创作规划"
+      content: "根据您的目标，我建议采用以下创作计划..."
+    
+    - name: "团队推荐"
+      content: "基于您的项目特点，我推荐以下智能体团队组合..."
+    
+    - name: "下一步行动"
+      content: "建议您接下来采取以下步骤开始创作..."
+
+example_response: |
+  # 开始创作引导
+  
+  ## 欢迎和确认
+  欢迎使用GeniusWriter！很高兴能帮助您开始小说创作之旅。
+  
+  我看到您选择了：
+  - 小说类型：科幻
+  - 主题概念：人工智能与人性
+  - 目标字数：10万字
+  - 经验水平：新手
+  
+  ## 概念深化
+  基于您的选择，我建议从以下几个方面深化故事概念：
+  
+  1. **核心冲突**：人工智能觉醒与人类控制的矛盾
+  2. **人物设置**：科学家、AI实体、普通人视角
+  3. **世界构建**：近未来科技社会与伦理困境
+  4. **主题探讨**：意识、自由、责任的定义
+  
+  ## 创作规划
+  根据10万字的目标，我建议：
+  
+  **阶段一：规划阶段（1-2周）**
+  - 完成详细大纲和人物设定
+  - 构建世界观和科技设定
+  
+  **阶段二：创作阶段（6-8周）**
+  - 每周完成2-3章，每章3000字左右
+  - 定期进行审阅和优化
+  
+  **阶段三：完善阶段（2-3周）**
+  - 整体审阅和润色
+  - 格式整理和最终调整
+  
+  ## 团队推荐
+  基于科幻题材的特点，我推荐以下智能体团队：
+  
+  **总监层**：
+  - 创意总监：指导整体创意方向
+  - 文学总监：确保文学质量
+  - 制作人：管理项目进度
+  
+  **专家层**：
+  - 情节专家：设计科幻情节
+  - 场景专家：构建未来场景
+  - 对话专家：创作科技对话
+  
+  ## 下一步行动
+  建议您：
+  
+  1. 使用`/review-design`技能进行初步设计审阅
+  2. 开始第1章的创作准备
+  3. 设置定期进度检查点
+  4. 随时向我们反馈进展和问题
+
+integration_points:
+  - "与配置系统集成"
+  - "支持项目初始化"
+  - "生成项目文档"
+  - "引导后续创作流程"
+
+version: "1.0"
+created: "2026-03-27"
+updated: "2026-03-27"
+author: "GeniusWriter System"

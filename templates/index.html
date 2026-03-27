@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeniusWriter - AI小说创作平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <i class="fas fa-book-open"></i>
+                <span>GeniusWriter</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="active"><i class="fas fa-home"></i> 首页</a>
+                <a href="/config"><i class="fas fa-cog"></i> 配置</a>
+                <a href="/writing"><i class="fas fa-pen"></i> 创作</a>
+                <a href="#" id="agent-toggle"><i class="fas fa-robot"></i> 智能体面板</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 智能体面板（默认隐藏） -->
+    <div id="agent-panel" class="agent-panel hidden">
+        <div class="panel-header">
+            <h3><i class="fas fa-users"></i> 智能体协调系统</h3>
+            <button id="close-panel" class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="panel-content">
+            <div class="agent-tier">
+                <h4><i class="fas fa-crown"></i> 总监层 (Tier 1)</h4>
+                <div class="agent-cards" id="tier1-agents">
+                    <!-- 通过JS动态加载 -->
+                </div>
+            </div>
+            <div class="agent-tier">
+                <h4><i class="fas fa-user-tie"></i> 部门主管层 (Tier 2)</h4>
+                <div class="agent-cards" id="tier2-agents">
+                    <!-- 通过JS动态加载 -->
+                </div>
+            </div>
+            <div class="agent-tier">
+                <h4><i class="fas fa-user-graduate"></i> 专家层 (Tier 3)</h4>
+                <div class="agent-cards" id="tier3-agents">
+                    <!-- 通过JS动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容 -->
+    <main class="container">
+        <!-- 英雄区域 -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1><i class="fas fa-magic"></i> 开启AI小说创作之旅</h1>
+                <p class="hero-description">
+                    基于Claude Game Studios架构，GeniusWriter采用三级智能体协调系统，<br>
+                    为您的创作提供专业级的AI协作支持。
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-robot"></i>
+                        <div class="stat-number" id="agent-count">36</div>
+                        <div class="stat-label">专业代理</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-tools"></i>
+                        <div class="stat-number" id="skill-count">28</div>
+                        <div class="stat-label">工作流技能</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-brain"></i>
+                        <div class="stat-number" id="model-count">4</div>
+                        <div class="stat-label">大模型支持</div>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <a href="/config" class="btn btn-primary btn-large">
+                        <i class="fas fa-play-circle"></i> 开始创作
+                    </a>
+                    <a href="#" id="demo-btn" class="btn btn-secondary btn-large">
+                        <i class="fas fa-eye"></i> 查看演示
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="illustration">
+                    <i class="fas fa-book"></i>
+                    <i class="fas fa-pen-nib"></i>
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- 功能介绍 -->
+        <section class="features">
+            <h2><i class="fas fa-star"></i> 核心功能</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h3>智能配置</h3>
+                    <p>自定义小说主题、章节结构、字数要求，灵活配置大模型参数。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <h3>三级代理架构</h3>
+                    <p>总监层、部门主管层、专家层三级智能体协同工作，专业分工明确。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>多模型支持</h3>
+                    <p>支持OpenAI、DeepSeek等多种大模型，根据需求灵活切换。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>创作进度可视化</h3>
+                    <p>实时查看创作进度，章节完成情况一目了然。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-export"></i>
+                    </div>
+                    <h3>多格式导出</h3>
+                    <p>支持Markdown、Word、PDF等多种格式导出，方便分享和出版。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3>版本管理</h3>
+                    <p>完整的创作历史记录，支持版本对比和恢复。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 创作流程 -->
+        <section class="workflow">
+            <h2><i class="fas fa-project-diagram"></i> 创作流程</h2>
+            <div class="workflow-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>配置小说</h3>
+                        <p>设置主题、章节、字数等基本参数</p>
+                    </div>
+                </div>
+                <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>生成大纲</h3>
+                        <p>智能体协作生成完整小说大纲</p>
+                    </div>
+                </div>
+                <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>章节创作</h3>
+                        <p>专家代理逐章创作内容</p>
+                    </div>
+                </div>
+                <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>审阅优化</h3>
+                        <p>文学总监审核，优化文本质量</p>
+                    </div>
+                </div>
+                <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>导出分享</h3>
+                        <p>多种格式导出，完成创作</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 快速开始 -->
+        <section class="quick-start">
+            <h2><i class="fas fa-rocket"></i> 快速开始</h2>
+            <div class="quick-start-content">
+                <div class="instructions">
+                    <div class="instruction">
+                        <div class="instruction-icon"><i class="fas fa-key"></i></div>
+                        <div class="instruction-text">
+                            <h4>1. 配置API密钥</h4>
+                            <p>在配置页面设置您的大模型API密钥</p>
+                        </div>
+                    </div>
+                    <div class="instruction">
+                        <div class="instruction-icon"><i class="fas fa-book"></i></div>
+                        <div class="instruction-text">
+                            <h4>2. 创建新项目</h4>
+                            <p>设置小说主题、章节数量和目标字数</p>
+                        </div>
+                    </div>
+                    <div class="instruction">
+                        <div class="instruction-icon"><i class="fas fa-play"></i></div>
+                        <div class="instruction-text">
+                            <h4>3. 开始创作</h4>
+                            <p>启动智能体系统，自动生成小说内容</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="cta-box">
+                    <h3>准备好开始了吗？</h3>
+                    <p>立即体验AI协作创作的魅力</p>
+                    <a href="/config" class="btn btn-primary btn-large">
+                        <i class="fas fa-play"></i> 立即开始
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4><i class="fas fa-book-open"></i> GeniusWriter</h4>
+                    <p>基于Claude Game Studios架构的AI小说创作平台</p>
+                </div>
+                <div class="footer-section">
+                    <h4>技术栈</h4>
+                    <ul>
+                        <li>Flask + Python</li>
+                        <li>三级智能体架构</li>
+                        <li>多模型API集成</li>
+                        <li>响应式Web界面</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>链接</h4>
+                    <ul>
+                        <li><a href="/">首页</a></li>
+                        <li><a href="/config">配置</a></li>
+                        <li><a href="/writing">创作</a></li>
+                        <li><a href="#" id="api-docs">API文档</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>状态</h4>
+                    <div class="status-indicator">
+                        <span class="status-dot active"></span>
+                        <span>系统运行正常</span>
+                    </div>
+                    <div id="system-status" class="status-text">
+                        正在检查系统状态...
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 GeniusWriter - AI小说创作平台 | 基于Claude Game Studios架构</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

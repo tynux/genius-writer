@@ -1,0 +1,123 @@
+# 情节设计技能定义
+# 指导故事情节的设计和规划
+
+name: "plot_design"
+command: "/design-plot"
+description: "指导故事情节的设计、规划和优化，包括结构、冲突、节奏等"
+
+category: "design"
+complexity: "intermediate"  # beginner, intermediate, advanced
+execution_time: "medium"  # quick, medium, long
+
+parameters:
+  plot_type:
+    type: "string"
+    required: true
+    description: "情节类型"
+    options: ["线性情节", "多线情节", "环形情节", "非线性情节"]
+  
+  structure_model:
+    type: "string"
+    required: false
+    description: "结构模型"
+    options: ["三幕剧", "英雄之旅", "救猫咪", "自定义"]
+    default: "三幕剧"
+  
+  target_length:
+    type: "number"
+    required: false
+    description: "目标章节数"
+    min: 5
+    max: 200
+    default: 30
+
+workflow:
+  steps:
+    - name: "概念设计"
+      description: "设计情节的基本概念和主题"
+      agents: ["creative_director", "plot_expert"]
+      duration: "10分钟"
+    
+    - name: "结构设计"
+      description: "设计情节的整体结构和节奏"
+      agents: ["plot_expert", "producer"]
+      duration: "12分钟"
+    
+    - name: "冲突设计"
+      description: "设计情节中的冲突和转折"
+      agents: ["plot_expert", "character_designer"]
+      duration: "10分钟"
+    
+    - name: "章节规划"
+      description: "规划具体章节的情节安排"
+      agents: ["plot_expert", "producer"]
+      duration: "15分钟"
+    
+    - name: "审阅优化"
+      description: "审阅和优化情节设计"
+      agents: ["creative_director", "literary_director"]
+      duration: "8分钟"
+
+prompt_template: |
+  你正在使用GeniusWriter的"情节设计"技能。
+  
+  设计需求：
+  - 情节类型：{{plot_type}}
+  - 结构模型：{{structure_model}}
+  - 目标章节：{{target_length}}章
+  
+  请指导完成以下设计任务：
+  1. 设计情节的基本概念和主题
+  2. 设计情节的整体结构和节奏
+  3. 设计情节中的冲突和转折
+  4. 规划具体章节的情节安排
+  5. 进行设计审阅和优化
+  
+  请以专业、系统性的态度指导设计过程。
+
+response_format:
+  sections:
+    - name: "概念设计"
+      content: "情节的基本概念和主题设计..."
+    
+    - name: "结构设计"
+      content: "情节的整体结构和节奏设计..."
+    
+    - name: "冲突设计"
+      content: "情节中的冲突和转折设计..."
+    
+    - name: "章节规划"
+      content: "具体章节的情节安排规划..."
+    
+    - name: "设计建议"
+      content: "进一步的设计建议和注意事项..."
+
+plot_elements:
+  overall_structure:
+    - "开端设置"
+    - "发展过程"
+    - "高潮设计"
+    - "结局安排"
+  
+  conflict_types:
+    - "人物vs自我"
+    - "人物vs人物"
+    - "人物vs社会"
+    - "人物vs自然"
+  
+  pacing_control:
+    - "节奏变化"
+    - "紧张度控制"
+    - "情感起伏"
+    - "信息释放"
+  
+  plot_devices:
+    - "悬念设置"
+    - "伏笔安排"
+    - "转折设计"
+    - "呼应处理"
+
+version: "1.0"
+created: "2026-03-27"
+updated: "2026-03-27"
+author: "GeniusWriter System"
