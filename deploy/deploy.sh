@@ -83,6 +83,11 @@ detect_os() {
         . /etc/os-release
         OS=$ID
         VERSION=$VERSION_ID
+        
+        # 检查ID_LIKE字段以更好地识别系统家族
+        if [ -n "$ID_LIKE" ]; then
+            log_info "检测到系统家族: $ID_LIKE"
+        fi
     elif [ -f /etc/redhat-release ]; then
         OS="rhel"
         VERSION=$(cat /etc/redhat-release | sed -E 's/.*release ([0-9]+(\.[0-9]+)?).*/\1/')
@@ -95,11 +100,21 @@ detect_os() {
     fi
     
     # 确定包管理器
+    # 首先检查是否是中国国产操作系统（基于RHEL）
     case $OS in
+        opencloudos|anolis|kylin|uos|deepin)
+            # 这些系统通常基于RHEL/CentOS，使用yum或dnf
+            if command -v dnf >/dev/null 2>&1; then
+                PKG_MANAGER="dnf"
+            else
+                PKG_MANAGER="yum"
+            fi
+            log_info "检测到中国国产操作系统: $OS，使用包管理器: $PKG_MANAGER"
+            ;;
         ubuntu|debian|raspbian)
             PKG_MANAGER="apt"
             ;;
-        centos|rhel|fedora|amzn)
+        centos|rhel|fedora|amzn|rocky|almalinux|eurolinux)
             if command -v dnf >/dev/null 2>&1; then
                 PKG_MANAGER="dnf"
             else
@@ -111,6 +126,9 @@ detect_os() {
             ;;
         opensuse*|sles)
             PKG_MANAGER="zypper"
+            ;;
+        arch|manjaro)
+            PKG_MANAGER="pacman"
             ;;
         *)
             PKG_MANAGER="unknown"
@@ -202,7 +220,7 @@ configure_firewall() {
             ufw reload
             log_success "防火墙配置完成 (使用UFW)"
             ;;
-        centos|rhel|fedora|amzn)
+        centos|rhel|fedora|amzn|rocky|almalinux|eurolinux|opencloudos|anolis|kylin)
             systemctl enable firewalld
             systemctl start firewalld
             firewall-cmd --permanent --add-service=ssh
@@ -235,7 +253,7 @@ create_app_user() {
             ubuntu|debian)
                 adduser --system --group --no-create-home --disabled-login geniuswriter
                 ;;
-            centos|rhel|fedora|amzn|alpine)
+            centos|rhel|fedora|amzn|rocky|almalinux|eurolinux|opencloudos|anolis|kylin|alpine)
                 useradd -r -s /bin/false -M geniuswriter
                 ;;
             *)
@@ -625,11 +643,31 @@ setup_ssl() {
                 ;;
             dnf|yum)
                 log_info "使用$PKG_MANAGER安装certbot (RHEL/CentOS/Fedora)"
-                # 对于CentOS/RHEL，确保EPEL仓库已启用
-                if [ "$OS" = "centos" ] || [ "$OS" = "rhel" ]; then
-                    log_info "启用EPEL仓库以获取certbot..."
-                    $PKG_MANAGER install -y epel-release
-                fi
+                # 对于RHEL系列系统，可能需要启用EPEL仓库
+                case $OS in
+                    centos|rhel|rocky|almalinux|eurolinux|opencloudos|anolis|kylin)
+                        log_info "为$OS系统启用EPEL仓库以获取certbot..."
+                        # 尝试安装EPEL仓库
+                        if $PKG_MANAGER repolist | grep -q epel; then
+                            log_info "EPEL仓库已启用"
+                        else
+                            # 安装EPEL仓库
+                            if [ "$OS" = "centos" ] && [ "${VERSION%%.*}" = "7" ]; then
+                                $PKG_MANAGER install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+                            elif [ "$OS" = "centos" ] && [ "${VERSION%%.*}" = "8" ]; then
+                                $PKG_MANAGER install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+                            elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ] || [ "$OS" = "rocky" ] || [ "$OS" = "almalinux" ] || [ "$OS" = "eurolinux" ]; then
+                                $PKG_MANAGER install -y epel-release
+                            else
+                                # 对于中国国产操作系统，尝试使用EPEL
+                                log_info "尝试为$OS安装EPEL仓库..."
+                                $PKG_MANAGER install -y epel-release || log_warning "EPEL仓库安装失败，尝试从默认仓库安装certbot"
+                            fi
+                        fi
+                        ;;
+                esac
+                
+                # 安装certbot
                 $PKG_MANAGER install -y certbot python3-certbot-nginx
                 ;;
             apk)
