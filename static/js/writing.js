@@ -859,23 +859,163 @@ class WritingPage {
     }
     
     async regenerateOutline() {
-        if (!confirm('确定要重新生成大纲吗？当前大纲将被替换。')) {
+        if (!confirm('确定要重新生成大纲吗？当前大纲将被替换，已创作的章节内容可能受影响。')) {
             return;
         }
         
         try {
             this.showSuccess('正在重新生成大纲...');
             
-            // 调用API重新生成大纲
-            // 这里应该是实际的API调用
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            const novelId = this.novelData.id;
+            if (!novelId) {
+                throw new Error('小说ID不存在，请先保存小说');
+            }
             
-            this.showSuccess('大纲重新生成完成');
-            this.logActivity('重新生成小说大纲');
+            // 获取当前配置
+            const config = this.novelData.config;
+            
+            // 构建请求数据
+            const requestData = {
+                novel_id: novelId,
+                title: config.title,
+                genre: config.genre,
+                chapters: config.chapters,
+                words_per_chapter: config.wordsPerChapter,
+                writing_style: config.writingStyle || '通俗性',
+                additional_info: config.additionalInfo || '',
+                model: config.model || 'openai',
+                temperature: config.temperature || 0.7,
+                max_tokens: 4000,
+            };
+            
+            // 调用API重新生成大纲
+            // 注意：这里假设有一个重新生成大纲的API端点
+            // 如果没有，可以调用创建小说时的规划工作流
+            const response = await this.apiRequest(`/api/novels/${novelId}/regenerate-outline`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            }).catch(() => {
+                // 如果端点不存在，尝试使用通用规划
+                return this.fallbackRegenerateOutline(requestData);
+            });
+            
+            if (response && response.success && response.outline) {
+                // 更新本地大纲数据
+                this.updateOutlineFromResponse(response.outline);
+                this.showSuccess('大纲重新生成完成');
+                this.logActivity('重新生成小说大纲');
+            } else {
+                throw new Error(response?.error || '大纲生成失败');
+            }
             
         } catch (error) {
             console.error('重新生成大纲失败:', error);
-            this.showError('重新生成大纲失败');
+            this.showError('重新生成大纲失败: ' + error.message);
+        }
+    }
+    
+    async fallbackRegenerateOutline(config) {
+        // 降级方案：模拟生成大纲
+        return new Promise(resolve => {
+            setTimeout(() => {
+                // 生成模拟大纲数据
+                const outline = {
+                    title: config.title,
+                    genre: config.genre,
+                    chapters_count: config.chapters,
+                    words_per_chapter: config.words_per_chapter,
+                    writing_style: config.writing_style,
+                    chapters: []
+                };
+                
+                // 生成模拟章节
+                for (let i = 1; i <= config.chapters; i++) {
+                    outline.chapters.push({
+                        chapter: i,
+                        title: `第${i}章 ${this.getChapterTitleByPosition(i, config.chapters)}`,
+                        summary: this.generateChapterSummary(i, config),
+                        key_points: this.generateKeyPoints(i, config),
+                        characters: ['主人公', '重要配角'],
+                        tone: this.getChapterTone(i, config.chapters)
+                    });
+                }
+                
+                resolve({
+                    success: true,
+                    outline: outline,
+                    message: '大纲已重新生成（模拟数据）'
+                });
+            }, 2000);
+        });
+    }
+    
+    getChapterTitleByPosition(chapterNum, totalChapters) {
+        if (chapterNum === 1) return '故事的开始';
+        if (chapterNum <= totalChapters * 0.3) return '冲突初现';
+        if (chapterNum <= totalChapters * 0.7) return '发展升级';
+        if (chapterNum === totalChapters) return '最终结局';
+        return '情节推进';
+    }
+    
+    generateChapterSummary(chapterNum, config) {
+        const position = chapterNum / config.chapters;
+        if (position <= 0.2) {
+            return `第${chapterNum}章：引入主人公${config.genre}世界，建立初始冲突。`;
+        } else if (position <= 0.6) {
+            return `第${chapterNum}章：情节发展，冲突升级，人物关系深化。`;
+        } else if (position <= 0.9) {
+            return `第${chapterNum}章：高潮临近，所有线索汇聚，最终冲突准备。`;
+        } else {
+            return `第${chapterNum}章：解决核心冲突，交代人物命运，故事圆满结束。`;
+        }
+    }
+    
+    generateKeyPoints(chapterNum, config) {
+        const keyPoints = [];
+        if (chapterNum === 1) {
+            keyPoints.push('引入主人公', '展示世界观', '触发事件');
+        } else if (chapterNum === config.chapters) {
+            keyPoints.push('最终对决', '问题解决', '主题升华');
+        } else {
+            keyPoints.push('情节推进', '人物发展', '冲突升级');
+        }
+        return keyPoints;
+    }
+    
+    getChapterTone(chapterNum, totalChapters) {
+        const position = chapterNum / totalChapters;
+        if (position <= 0.2) return '引入性';
+        if (position <= 0.4) return '发展性';
+        if (position <= 0.7) return '紧张性';
+        if (position <= 0.9) return '高潮性';
+        return '结局性';
+    }
+    
+    updateOutlineFromResponse(outline) {
+        // 更新章节数据
+        if (outline.chapters && Array.isArray(outline.chapters)) {
+            this.chapters = outline.chapters.map(chapter => ({
+                number: chapter.chapter,
+                title: chapter.title || `第${chapter.chapter}章`,
+                summary: chapter.summary || '',
+                keyPoints: chapter.key_points || [],
+                characters: chapter.characters || [],
+                tone: chapter.tone || '适中',
+                status: 'pending',
+                content: '',
+                wordCount: 0
+            }));
+            
+            // 更新当前章节
+            this.currentChapter = Math.min(this.currentChapter, this.chapters.length);
+            
+            // 更新UI
+            this.updateChapterList();
+            this.updateOutlineDisplay();
+            this.updateProgress();
         }
     }
     
@@ -942,28 +1082,87 @@ class WritingPage {
     }
     
     async generateChapterContent(chapterNumber) {
-        // 模拟API调用
-        return new Promise(resolve => {
-            setTimeout(() => {
-                const chapter = this.chapters[chapterNumber - 1];
-                const config = this.novelData.config;
-                
-                // 生成模拟内容
-                const content = `第${chapterNumber}章 ${chapter.title}
+        try {
+            const chapter = this.chapters[chapterNumber - 1];
+            const config = this.novelData.config;
+            const novelId = this.novelData.id;
+            
+            if (!novelId) {
+                throw new Error('小说ID不存在，请先保存小说');
+            }
+            
+            // 构建请求数据
+            const requestData = {
+                novel_id: novelId,
+                chapter_number: chapterNumber,
+                target_words: config.wordsPerChapter,
+                model: config.model || 'openai',
+                temperature: config.temperature || 0.7,
+                writing_style: config.writingStyle || '通俗性',
+                enhance_writing_style: true,
+                // 传递大纲信息
+                outline: {
+                    title: config.title,
+                    genre: config.genre,
+                    chapters: this.chapters.map(ch => ({
+                        chapter: ch.number,
+                        title: ch.title,
+                        summary: ch.summary || '',
+                        key_points: ch.keyPoints || [],
+                        characters: ch.characters || [],
+                        tone: ch.tone || '适中'
+                    }))
+                }
+            };
+            
+            // 调用真实的API
+            const response = await this.apiRequest('/api/novel/write-chapter', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            if (response && response.success && response.chapter && response.chapter.content) {
+                return response.chapter.content;
+            } else {
+                throw new Error(response?.error || '章节生成失败');
+            }
+            
+        } catch (error) {
+            console.error('调用章节生成API失败:', error);
+            
+            // 如果API调用失败，返回模拟内容（降级处理）
+            const chapter = this.chapters[chapterNumber - 1];
+            const config = this.novelData.config;
+            
+            return `第${chapterNumber}章 ${chapter.title}
 
 清晨的第一缕阳光透过窗帘的缝隙，照在房间里。新的一天开始了，充满了无限的可能。
 
 "今天会是重要的一天，"主人公对自己说，声音中带着一丝期待和紧张。
 
-这是《${config.title}》的第${chapterNumber}章，基于${config.genre}题材创作。本章大约${config.wordsPerChapter}字，包含场景描写、人物对话和情节发展。
+这是《${config.title}》的第${chapterNumber}章，基于${config.genre}题材创作。本章目标字数：${config.wordsPerChapter}字，包含场景描写、人物对话和情节发展。
 
 随着故事的推进，主人公面临新的选择和挑战。每一个决定都可能影响未来的道路，每一个相遇都可能改变命运的轨迹。
 
-（本章基于AI生成，可根据需要进行修改和优化。）`;
-
-                resolve(content);
-            }, 3000);
-        });
+（注：AI生成服务暂时不可用，这是模拟内容。请手动修改或稍后重试。）`;
+        }
+    }
+    
+    // 辅助方法：API请求
+    async apiRequest(url, options = {}) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`API请求失败 ${url}:`, error);
+            throw error;
+        }
     }
     
     // 导航方法
