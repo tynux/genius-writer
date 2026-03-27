@@ -386,33 +386,148 @@ EOF
 setup_nginx() {
     log_info "配置Nginx..."
     
-    NGINX_SITE="/etc/nginx/sites-available/geniuswriter"
+    # 检查Nginx是否安装
+    if ! command -v nginx >/dev/null 2>&1; then
+        log_warning "Nginx未安装，尝试安装..."
+        case $PKG_MANAGER in
+            apt)
+                apt install -y nginx
+                ;;
+            dnf|yum)
+                $PKG_MANAGER install -y nginx
+                ;;
+            apk)
+                apk add nginx
+                ;;
+            zypper)
+                zypper install -y nginx
+                ;;
+            *)
+                log_error "无法安装Nginx，请手动安装: nginx"
+                return 1
+                ;;
+        esac
+    fi
+    
+    # 确定Nginx配置目录结构
+    NGINX_CONF_DIR=""
+    if [ -d "/etc/nginx/sites-available" ]; then
+        NGINX_CONF_DIR="/etc/nginx/sites-available"
+        NGINX_SITE="$NGINX_CONF_DIR/geniuswriter"
+        log_info "使用Nginx配置目录: sites-available"
+    elif [ -d "/etc/nginx/conf.d" ]; then
+        NGINX_CONF_DIR="/etc/nginx/conf.d"
+        NGINX_SITE="$NGINX_CONF_DIR/geniuswriter.conf"
+        log_info "使用Nginx配置目录: conf.d"
+    else
+        # 尝试创建sites-available目录
+        mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled 2>/dev/null
+        if [ -d "/etc/nginx/sites-available" ]; then
+            NGINX_CONF_DIR="/etc/nginx/sites-available"
+            NGINX_SITE="$NGINX_CONF_DIR/geniuswriter"
+            log_info "创建Nginx配置目录: sites-available"
+        else
+            log_error "无法确定Nginx配置目录，请手动配置"
+            return 1
+        fi
+    fi
+    
+    # 确保配置目录存在
+    mkdir -p "$(dirname "$NGINX_SITE")"
     
     # 创建Nginx配置文件
-    cat > $NGINX_SITE << EOF
+    log_info "创建Nginx配置文件: $NGINX_SITE"
+    cat > "$NGINX_SITE" << EOF
+# GeniusWriter配置
+# 域名: ageniuswriter.com
+
 server {
     listen 80;
     server_name ageniuswriter.com www.ageniuswriter.com;
     
+    # 访问日志
+    access_log /var/log/nginx/geniuswriter_access.log;
+    error_log /var/log/nginx/geniuswriter_error.log;
+    
+    # 静态文件
+    location /static/ {
+        alias /opt/geniuswriter/static/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # 上传文件
+    location /uploads/ {
+        alias /opt/geniuswriter/uploads/;
+        expires 7d;
+        add_header Cache-Control "public";
+    }
+    
+    # 代理到Gunicorn
     location / {
         proxy_pass http://localhost:8000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$server_name;
+        
+        # WebSocket支持（如果有）
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # 超时设置
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+    
+    # 禁止访问敏感文件
+    location ~ /\.(env|git|svn|htaccess) {
+        deny all;
+    }
+    
+    location ~ /\.(?!well-known).* {
+        deny all;
     }
 }
 EOF
     
-    # 启用站点
-    ln -sf $NGINX_SITE /etc/nginx/sites-enabled/
-    rm -f /etc/nginx/sites-enabled/default
+    # 启用站点（仅适用于sites-available/sites-enabled结构）
+    if [ "$NGINX_CONF_DIR" = "/etc/nginx/sites-available" ]; then
+        if [ -d "/etc/nginx/sites-enabled" ]; then
+            ln -sf "$NGINX_SITE" /etc/nginx/sites-enabled/
+            # 移除默认站点（如果存在）
+            rm -f /etc/nginx/sites-enabled/default 2>/dev/null
+            log_info "Nginx站点已启用 (sites-enabled)"
+        fi
+    fi
+    
+    # 确保Nginx日志目录存在
+    mkdir -p /var/log/nginx
     
     # 测试配置
-    nginx -t
-    systemctl restart nginx
-    
-    log_success "Nginx配置完成"
+    log_info "测试Nginx配置..."
+    if nginx -t; then
+        # 重启Nginx
+        if systemctl restart nginx; then
+            log_success "Nginx配置完成并已重启"
+        else
+            # 尝试启动Nginx
+            systemctl enable nginx 2>/dev/null
+            systemctl start nginx
+            if systemctl is-active --quiet nginx; then
+                log_success "Nginx配置完成并已启动"
+            else
+                log_warning "Nginx重启失败，但配置已保存。请手动重启nginx"
+            fi
+        fi
+    else
+        log_error "Nginx配置测试失败，请检查配置文件"
+        log_warning "配置文件位置: $NGINX_SITE"
+        return 1
+    fi
 }
 
 # 获取SSL证书
