@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置 - GeniusWriter</title>
+    <link rel="stylesheet" href="/static/css/style-clean.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/static/js/config-ux.js" defer></script>
+    <style>
+        /* 用户体验优化样式 */
+        .config-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .flow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+        
+        .flow-steps::before {
+            content: '';
+            position: absolute;
+            top: 1rem;
+            left: 2rem;
+            right: 2rem;
+            height: 2px;
+            background: var(--color-gray-200);
+            z-index: 1;
+        }
+        
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: var(--color-white);
+            border: 2px solid var(--color-gray-300);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--color-gray-600);
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .step-circle.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: var(--color-white);
+        }
+        
+        .step-circle.completed {
+            background: var(--color-success);
+            border-color: var(--color-success);
+            color: var(--color-white);
+        }
+        
+        .step-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-gray-600);
+            text-align: center;
+        }
+        
+        .step-label.active {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+        
+        .step-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .step-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .model-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .model-card {
+            background: var(--color-white);
+            border: 2px solid var(--color-gray-200);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .model-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--color-primary-light);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .model-card.selected {
+            border-color: var(--color-primary);
+            background: linear-gradient(135deg, var(--color-primary-light) 0%, rgba(59, 130, 246, 0.05) 100%);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);
+        }
+        
+        .model-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .model-icon.openai {
+            background: linear-gradient(135deg, #10a37f 0%, rgba(16, 163, 127, 0.2) 100%);
+            color: #10a37f;
+        }
+        
+        .model-icon.deepseek {
+            background: linear-gradient(135deg, #4361ee 0%, rgba(67, 97, 238, 0.2) 100%);
+            color: #4361ee;
+        }
+        
+        .model-icon.simulated {
+            background: linear-gradient(135deg, #6b7280 0%, rgba(107, 114, 128, 0.2) 100%);
+            color: #6b7280;
+        }
+        
+        .model-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .model-desc {
+            font-size: 0.875rem;
+            color: var(--color-gray-600);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        
+        .model-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem 0;
+        }
+        
+        .model-features li {
+            font-size: 0.875rem;
+            color: var(--color-gray-700);
+            margin-bottom: 0.375rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .model-features li i {
+            color: var(--color-success);
+            margin-right: 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .model-recommended {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--color-primary);
+            color: var(--color-white);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-bottom-left-radius: 0.75rem;
+        }
+        
+        .api-config-section {
+            background: var(--color-gray-50);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--color-gray-200);
+        }
+        
+        .api-input-group {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .api-input {
+            flex: 1;
+            position: relative;
+        }
+        
+        .api-test-btn {
+            white-space: nowrap;
+            align-self: flex-start;
+            margin-top: 0.5rem;
+        }
+        
+        .test-result {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+        
+        .test-result.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--color-success);
+        }
+        
+        .test-result.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--color-error);
+        }
+        
+        .parameter-slider {
+            width: 100%;
+            margin: 0.5rem 0 1rem;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--color-gray-200);
+            outline: none;
+        }
+        
+        .parameter-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            cursor: pointer;
+            border: 2px solid var(--color-white);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .parameter-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-primary);
+            min-width: 3rem;
+            text-align: right;
+        }
+        
+        .quick-presets {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        
+        .preset-btn {
+            padding: 0.375rem 0.75rem;
+            background: var(--color-white);
+            border: 1px solid var(--color-gray-300);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--color-gray-700);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .preset-btn:hover {
+            background: var(--color-gray-50);
+        }
+        
+        .preset-btn.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: var(--color-white);
+        }
+        
+        .flow-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--color-gray-200);
+        }
+        
+        .hint-box {
+            background: var(--color-blue-50);
+            border: 1px solid var(--color-blue-200);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .hint-icon {
+            color: var(--color-info);
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 0.125rem;
+        }
+        
+        .hint-content {
+            flex: 1;
+        }
+        
+        .hint-title {
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin-bottom: 0.25rem;
+        }
+        
+        .hint-text {
+            font-size: 0.875rem;
+            color: var(--color-gray-700);
+            line-height: 1.5;
+        }
+        
+        .config-summary {
+            background: var(--color-gray-50);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid var(--color-gray-200);
+        }
+        
+        .summary-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-gray-700);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .summary-label {
+            font-size: 0.75rem;
+            color: var(--color-gray-600);
+            margin-bottom: 0.25rem;
+        }
+        
+        .summary-value {
+            font-weight: 600;
+            color: var(--color-gray-900);
+        }
+        
+        /* 创作页面优化样式 */
+        .writing-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 1.5rem;
+            height: calc(100vh - 8rem);
+        }
+        
+        .chapter-sidebar {
+            background: var(--color-white);
+            border-radius: 1rem;
+            border: 1px solid var(--color-gray-200);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chapter-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+        
+        .chapter-item {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chapter-item:hover {
+            background: var(--color-gray-50);
+        }
+        
+        .chapter-item.active {
+            background: var(--color-primary-light);
+            border-color: var(--color-primary);
+            color: var(--color-white);
+        }
+        
+        .chapter-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-draft {
+            background: var(--color-gray-400);
+        }
+        
+        .status-writing {
+            background: var(--color-warning);
+        }
+        
+        .status-completed {
+            background: var(--color-success);
+        }
+        
+        .status-reviewed {
+            background: var(--color-info);
+        }
+        
+        .editor-container {
+            background: var(--color-white);
+            border-radius: 1rem;
+            border: 1px solid var(--color-gray-200);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-toolbar {
+            padding: 1rem;
+            background: var(--color-gray-50);
+            border-bottom: 1px solid var(--color-gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .editor-content {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        
+        .editor-content textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            font-family: var(--font-family-base);
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--color-gray-800);
+        }
+        
+        .editor-content textarea:focus {
+            outline: none;
+        }
+        
+        .editor-stats {
+            padding: 1rem;
+            background: var(--color-gray-50);
+            border-top: 1px solid var(--color-gray-200);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--color-gray-600);
+        }
+        
+        .status-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .status-card {
+            background: var(--color-white);
+            border-radius: 1rem;
+            border: 1px solid var(--color-gray-200);
+            padding: 1.5rem;
+        }
+        
+        .agent-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .agent-name {
+            font-weight: 500;
+            color: var(--color-gray-700);
+        }
+        
+        .agent-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .indicator-active {
+            background: var(--color-success);
+        }
+        
+        .indicator-inactive {
+            background: var(--color-gray-400);
+        }
+        
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .ring-bg {
+            fill: none;
+            stroke: var(--color-gray-200);
+            stroke-width: 4;
+        }
+        
+        .ring-progress {
+            fill: none;
+            stroke: var(--color-primary);
+            stroke-width: 4;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        
+        .progress-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        
+        .action-btn {
+            padding: 0.75rem;
+            background: var(--color-white);
+            border: 1px solid var(--color-gray-300);
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: var(--color-gray-50);
+            border-color: var(--color-gray-400);
+        }
+        
+        .action-icon {
+            font-size: 1.25rem;
+            color: var(--color-primary);
+        }
+        
+        .action-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--color-gray-700);
+        }
+        
+        @media (max-width: 1200px) {
+            .writing-layout {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .writing-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .writing-layout > * {
+                margin-bottom: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .model-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .flow-steps {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .flow-steps::before {
+                display: none;
+            }
+            
+            .flow-step {
+                flex-direction: row;
+                gap: 0.75rem;
+                width: 100%;
+            }
+            
+            .step-circle {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-logo">
+                <i class="fas fa-book-open navbar-logo-icon"></i>
+                <span>GeniusWriter</span>
+            </a>
+            <div class="navbar-nav">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span class="sm-hidden">首页</span>
+                </a>
+                <a href="/config" class="nav-link active">
+                    <i class="fas fa-cog"></i>
+                    <span class="sm-hidden">配置</span>
+                </a>
+                <a href="/writing" class="nav-link">
+                    <i class="fas fa-pen"></i>
+                    <span class="sm-hidden">创作</span>
+                </a>
+                <a href="#" id="back-to-home" class="nav-link">
+                    <i class="fas fa-arrow-left"></i>
+                    <span class="sm-hidden">返回</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main class="main-content">
+        <div class="container">
+            <!-- 配置流程步骤指示器 -->
+            <div class="flow-steps">
+                <div class="flow-step" id="step1">
+                    <div class="step-circle active" data-step="1">1</div>
+                    <div class="step-label active">小说设置</div>
+                </div>
+                <div class="flow-step" id="step2">
+                    <div class="step-circle" data-step="2">2</div>
+                    <div class="step-label">选择模型</div>
+                </div>
+                <div class="flow-step" id="step3">
+                    <div class="step-circle" data-step="3">3</div>
+                    <div class="step-label">参数调整</div>
+                </div>
+                <div class="flow-step" id="step4">
+                    <div class="step-circle" data-step="4">4</div>
+                    <div class="step-label">开始创作</div>
+                </div>
+            </div>
+
+            <!-- 配置流程内容 -->
+            <div class="config-flow">
+                <!-- 步骤1: 小说设置 -->
+                <div class="step-content active" id="step1-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="mb-0">
+                                <i class="fas fa-book mr-2"></i>
+                                小说基础设置
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- 提示框 -->
+                            <div class="hint-box">
+                                <i class="fas fa-lightbulb hint-icon"></i>
+                                <div class="hint-content">
+                                    <div class="hint-title">创作建议</div>
+                                    <div class="hint-text">明确的小说设定有助于AI更好地理解您的创作意图，生成更符合期望的内容。</div>
+                                </div>
+                            </div>
+
+                            <!-- 小说配置表单 -->
+                            <form id="novel-config-form" class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- 左侧列 -->
+                                    <div class="space-y-6">
+                                        <div class="form-group">
+                                            <label for="novel-title" class="form-label">
+                                                <i class="fas fa-heading mr-1"></i>
+                                                小说标题
+                                            </label>
+                                            <input type="text" id="novel-title" class="form-control" 
+                                                   placeholder="请输入引人入胜的小说标题" required>
+                                            <div class="form-text">好的标题能吸引读者，反映小说核心主题</div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="novel-genre" class="form-label">
+                                                <i class="fas fa-tags mr-1"></i>
+                                                小说类型
+                                            </label>
+                                            <select id="novel-genre" class="form-control" required>
+                                                <option value="">请选择类型</option>
+                                                <option value="历史">历史小说</option>
+                                                <option value="科幻">科幻小说</option>
+                                                <option value="奇幻">奇幻小说</option>
+                                                <option value="都市" selected>都市小说</option>
+                                                <option value="悬疑">悬疑小说</option>
+                                                <option value="武侠">武侠小说</option>
+                                                <option value="言情">言情小说</option>
+                                                <option value="军事">军事小说</option>
+                                                <option value="玄幻">玄幻小说</option>
+                                                <option value="轻小说">轻小说</option>
+                                            </select>
+                                            <div class="form-text">选择类型影响AI的专家选择和创作风格</div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-list-ol mr-1"></i>
+                                                章节规划
+                                            </label>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label for="chapters-count" class="form-label text-sm">章节数量</label>
+                                                    <input type="number" id="chapters-count" class="form-control" 
+                                                           value="10" min="1" max="100" required>
+                                                </div>
+                                                <div>
+                                                    <label for="words-per-chapter" class="form-label text-sm">每章字数</label>
+                                                    <div class="relative">
+                                                        <input type="number" id="words-per-chapter" class="form-control pr-12" 
+                                                               value="3000" min="500" max="10000" required>
+                                                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                                            字
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-4">
+                                                <label class="form-label text-sm">总字数预估</label>
+                                                <div class="px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 text-gray-700 font-medium" id="total-words">
+                                                    30,000字
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 右侧列 -->
+                                    <div class="space-y-6">
+                                        <div class="form-group">
+                                            <label for="writing-style" class="form-label">
+                                                <i class="fas fa-pen-fancy mr-1"></i>
+                                                写作风格
+                                            </label>
+                                            <select id="writing-style" class="form-control" required>
+                                                <option value="">请选择风格</option>
+                                                <option value="文学性">文学性（偏传统文学）</option>
+                                                <option value="通俗性" selected>通俗性（适合大众阅读）</option>
+                                                <option value="网络文学">网络文学风格</option>
+                                                <option value="传统文学">传统文学风格</option>
+                                                <option value="轻小说风">轻小说风格</option>
+                                            </select>
+                                            <div class="form-text">选择适合您目标读者的写作风格</div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="target-audience" class="form-label">
+                                                <i class="fas fa-users mr-1"></i>
+                                                目标读者
+                                            </label>
+                                            <select id="target-audience" class="form-control">
+                                                <option value="general">大众读者</option>
+                                                <option value="young-adult">青少年</option>
+                                                <option value="adult">成人</option>
+                                                <option value="professional">专业读者</option>
+                                            </select>
+                                            <div class="form-text">明确目标读者有助于调整语言难度和内容深度</div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="additional-info" class="form-label">
+                                                <i class="fas fa-plus-circle mr-1"></i>
+                                                特别要求
+                                            </label>
+                                            <textarea id="additional-info" class="form-control" rows="5" 
+                                                      placeholder="可以在这里添加特殊要求，如：
+- 希望突出人物内心描写
+- 需要增加历史真实性
+- 希望有反转情节
+- 其他特殊要求"></textarea>
+                                            <div class="form-text">越详细的说明，AI生成的内容越符合您的期望</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 配置摘要 -->
+                                <div class="config-summary">
+                                    <div class="summary-title">配置摘要</div>
+                                    <div class="summary-grid">
+                                        <div class="summary-item">
+                                            <span class="summary-label">标题</span>
+                                            <span class="summary-value" id="summary-title">未设置</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">类型</span>
+                                            <span class="summary-value" id="summary-genre">都市</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">章节</span>
+                                            <span class="summary-value" id="summary-chapters">10章</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">字数</span>
+                                            <span class="summary-value" id="summary-words">30,000字</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">风格</span>
+                                            <span class="summary-value" id="summary-style">通俗性</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">读者</span>
+                                            <span class="summary-value" id="summary-audience">大众读者</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card-footer">
+                            <div class="flow-navigation">
+                                <div></div> <!-- 左侧占位 -->
+                                <div>
+                                    <button class="btn btn-primary" id="next-step-1">
+                                        下一步：选择模型
+                                        <i class="fas fa-arrow-right ml-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤2: 选择模型 -->
+                <div class="step-content" id="step2-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="mb-0">
+                                <i class="fas fa-brain mr-2"></i>
+                                选择创作模型
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- 提示框 -->
+                            <div class="hint-box">
+                                <i class="fas fa-lightbulb hint-icon"></i>
+                                <div class="hint-content">
+                                    <div class="hint-title">模型选择建议</div>
+                                    <div class="hint-text">不同模型适合不同类型的小说创作，选择合适的模型能获得更好的创作效果。</div>
+                                </div>
+                            </div>
+
+                            <!-- 模型卡片选择 -->
+                            <div class="model-cards">
+                                <!-- OpenAI 模型 -->
+                                <div class="model-card" data-model="openai">
+                                    <div class="model-icon openai">
+                                        <i class="fab fa-openai"></i>
+                                    </div>
+                                    <div class="model-name">OpenAI GPT系列</div>
+                                    <div class="model-desc">
+                                        强大的通用语言模型，适合各种类型的小说创作，尤其在创意写作和文学性表达方面表现出色。
+                                    </div>
+                                    <ul class="model-features">
+                                        <li><i class="fas fa-check"></i> 优秀的创意写作能力</li>
+                                        <li><i class="fas fa-check"></i> 强大的文学性表达</li>
+                                        <li><i class="fas fa-check"></i> 支持长文本生成</li>
+                                        <li><i class="fas fa-check"></i> 多语言支持</li>
+                                    </ul>
+                                    <div class="model-recommended">推荐</div>
+                                </div>
+
+                                <!-- DeepSeek 模型 -->
+                                <div class="model-card" data-model="deepseek">
+                                    <div class="model-icon deepseek">
+                                        <i class="fas fa-brain"></i>
+                                    </div>
+                                    <div class="model-name">DeepSeek</div>
+                                    <div class="model-desc">
+                                        国产优秀大模型，在中文理解和逻辑推理方面表现优异，特别适合中文小说创作和历史题材。
+                                    </div>
+                                    <ul class="model-features">
+                                        <li><i class="fas fa-check"></i> 优秀的中文理解</li>
+                                        <li><i class="fas fa-check"></i> 强大的逻辑推理</li>
+                                        <li><i class="fas fa-check"></i> 成本效益高</li>
+                                        <li><i class="fas fa-check"></i> 适合历史题材</li>
+                                    </ul>
+                                </div>
+
+                                <!-- 模拟模式 -->
+                                <div class="model-card" data-model="simulated">
+                                    <div class="model-icon simulated">
+                                        <i class="fas fa-desktop"></i>
+                                    </div>
+                                    <div class="model-name">模拟模式</div>
+                                    <div class="model-desc">
+                                        无需API密钥的测试模式，适合快速体验创作流程和测试功能，生成的内容为模拟数据。
+                                    </div>
+                                    <ul class="model-features">
+                                        <li><i class="fas fa-check"></i> 无需API密钥</li>
+                                        <li><i class="fas fa-check"></i> 快速体验流程</li>
+                                        <li><i class="fas fa-check"></i> 功能完整测试</li>
+                                        <li><i class="fas fa-check"></i> 适合初学者</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- API配置区域 -->
+                            <div class="api-config-section" id="api-config-section" style="display: none;">
+                                <h4 class="mb-4">
+                                    <i class="fas fa-key mr-2"></i>
+                                    API密钥配置
+                                </h4>
+                                
+                                <!-- OpenAI配置 -->
+                                <div id="openai-config" style="display: none;">
+                                    <div class="api-input-group">
+                                        <div class="api-input">
+                                            <label for="openai-key" class="form-label">OpenAI API密钥</label>
+                                            <div class="relative">
+                                                <input type="password" id="openai-key" class="form-control pr-10" 
+                                                       placeholder="sk-..." autocomplete="off">
+                                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700" id="toggle-openai-key">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="form-text">请输入有效的OpenAI API密钥，以"sk-"开头</div>
+                                        </div>
+                                        <button class="btn btn-secondary api-test-btn" id="test-openai">
+                                            <i class="fas fa-vial mr-1"></i>
+                                            测试连接
+                                        </button>
+                                    </div>
+                                    <div class="test-result" id="openai-test-result"></div>
+                                </div>
+                                
+                                <!-- DeepSeek配置 -->
+                                <div id="deepseek-config" style="display: none;">
+                                    <div class="api-input-group">
+                                        <div class="api-input">
+                                            <label for="deepseek-key" class="form-label">DeepSeek API密钥</label>
+                                            <div class="relative">
+                                                <input type="password" id="deepseek-key" class="form-control pr-10" 
+                                                       placeholder="sk-..." autocomplete="off">
+                                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700" id="toggle-deepseek-key">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="form-text">请输入有效的DeepSeek API密钥，以"sk-"开头</div>
+                                        </div>
+                                        <button class="btn btn-secondary api-test-btn" id="test-deepseek">
+                                            <i class="fas fa-vial mr-1"></i>
+                                            测试连接
+                                        </button>
+                                    </div>
+                                    <div class="test-result" id="deepseek-test-result"></div>
+                                </div>
+                            </div>
+
+                            <!-- 模型状态汇总 -->
+                            <div class="config-summary">
+                                <div class="summary-title">模型状态</div>
+                                <div class="summary-grid">
+                                    <div class="summary-item">
+                                        <span class="summary-label">当前选择</span>
+                                        <span class="summary-value" id="selected-model">未选择</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">连接状态</span>
+                                        <span class="summary-value" id="connection-status">未测试</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">推荐用途</span>
+                                        <span class="summary-value" id="model-recommendation">-</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">成本估算</span>
+                                        <span class="summary-value" id="cost-estimation">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="flow-navigation">
+                                <div>
+                                    <button class="btn btn-secondary" id="prev-step-2">
+                                        <i class="fas fa-arrow-left mr-2"></i>
+                                        上一步：小说设置
+                                    </button>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary" id="next-step-2">
+                                        下一步：参数调整
+                                        <i class="fas fa-arrow-right ml-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤3: 参数调整 -->
+                <div class="step-content" id="step3-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="mb-0">
+                                <i class="fas fa-sliders-h mr-2"></i>
+                                参数调整与优化
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- 提示框 -->
+                            <div class="hint-box">
+                                <i class="fas fa-lightbulb hint-icon"></i>
+                                <div class="hint-content">
+                                    <div class="hint-title">参数调整建议</div>
+                                    <div class="hint-text">合理的参数设置能显著提升创作质量，不同参数组合适合不同的创作需求。</div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <!-- 左侧：模型参数 -->
+                                <div>
+                                    <h4 class="mb-4">
+                                        <i class="fas fa-cog mr-2"></i>
+                                        模型参数
+                                    </h4>
+                                    
+                                    <!-- 快速预设 -->
+                                    <div class="mb-6">
+                                        <label class="form-label mb-2">快速预设</label>
+                                        <div class="quick-presets">
+                                            <button type="button" class="preset-btn active" data-preset="balanced">平衡模式</button>
+                                            <button type="button" class="preset-btn" data-preset="creative">创意模式</button>
+                                            <button type="button" class="preset-btn" data-preset="precise">精确模式</button>
+                                            <button type="button" class="preset-btn" data-preset="detailed">详细模式</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 创造力参数 -->
+                                    <div class="form-group mb-6">
+                                        <label class="form-label">创造力控制</label>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm text-gray-600">严谨</span>
+                                            <span class="parameter-value" id="creativity-value">0.7</span>
+                                            <span class="text-sm text-gray-600">创意</span>
+                                        </div>
+                                        <input type="range" class="parameter-slider" id="creativity-slider" 
+                                               min="0" max="20" value="7">
+                                        <div class="form-text">控制AI的创造性程度，值越高越有创意但可能偏离主题</div>
+                                    </div>
+
+                                    <!-- 最大长度 -->
+                                    <div class="form-group mb-6">
+                                        <label for="max-length" class="form-label">最大生成长度</label>
+                                        <input type="number" id="max-length" class="form-control" value="4000" min="500" max="16000">
+                                        <div class="form-text">控制单次生成的最大字符数，影响章节的详细程度</div>
+                                    </div>
+
+                                    <!-- 多样性控制 -->
+                                    <div class="form-group">
+                                        <label class="form-label">内容多样性</label>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm text-gray-600">一致</span>
+                                            <span class="parameter-value" id="diversity-value">中等</span>
+                                            <span class="text-sm text-gray-600">多样</span>
+                                        </div>
+                                        <input type="range" class="parameter-slider" id="diversity-slider" 
+                                               min="0" max="10" value="5">
+                                        <div class="form-text">控制生成内容的多样性，避免重复和单调</div>
+                                    </div>
+                                </div>
+
+                                <!-- 右侧：智能体参数 -->
+                                <div>
+                                    <h4 class="mb-4">
+                                        <i class="fas fa-robot mr-2"></i>
+                                        智能体参与度
+                                    </h4>
+
+                                    <!-- 总监层参与度 -->
+                                    <div class="form-group mb-6">
+                                        <label class="form-label">总监层参与度</label>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm text-gray-600">轻度参与</span>
+                                            <span class="parameter-value" id="tier1-value">80%</span>
+                                            <span class="text-sm text-gray-600">深度参与</span>
+                                        </div>
+                                        <input type="range" class="parameter-slider" id="tier1-slider" 
+                                               min="0" max="10" value="8">
+                                        <div class="form-text">创意总监和文学总监的参与程度，影响整体风格和文学质量</div>
+                                    </div>
+
+                                    <!-- 专家层参与度 -->
+                                    <div class="form-group mb-8">
+                                        <label class="form-label">专家层参与度</label>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm text-gray-600">基础参与</span>
+                                            <span class="parameter-value" id="tier3-value">90%</span>
+                                            <span class="text-sm text-gray-600">全面参与</span>
+                                        </div>
+                                        <input type="range" class="parameter-slider" id="tier3-slider" 
+                                               min="0" max="10" value="9">
+                                        <div class="form-text">各领域专家的参与程度，影响内容的专业性和细节质量</div>
+                                    </div>
+
+                                    <!-- 工作流选项 -->
+                                    <h4 class="mb-4">
+                                        <i class="fas fa-tasks mr-2"></i>
+                                        工作流选项
+                                    </h4>
+                                    
+                                    <div class="space-y-4">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" id="enable-quality-check" class="mr-3" checked>
+                                            <div>
+                                                <label for="enable-quality-check" class="font-medium">启用质量检查</label>
+                                                <div class="text-sm text-gray-600">自动检查章节质量，提供优化建议</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center">
+                                            <input type="checkbox" id="enable-auto-format" class="mr-3" checked>
+                                            <div>
+                                                <label for="enable-auto-format" class="font-medium">启用自动格式化</label>
+                                                <div class="text-sm text-gray-600">自动优化文本格式和排版</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center">
+                                            <input type="checkbox" id="enable-versioning" class="mr-3">
+                                            <div>
+                                                <label for="enable-versioning" class="font-medium">启用版本管理</label>
+                                                <div class="text-sm text-gray-600">保存创作历史，支持版本回退</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center">
+                                            <input type="checkbox" id="enable-feedback" class="mr-3" checked>
+                                            <div>
+                                                <label for="enable-feedback" class="font-medium">实时反馈建议</label>
+                                                <div class="text-sm text-gray-600">创作过程中提供实时建议和提示</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 参数效果预览 -->
+                            <div class="config-summary mt-8">
+                                <div class="summary-title">参数效果预览</div>
+                                <div class="summary-grid">
+                                    <div class="summary-item">
+                                        <span class="summary-label">创意程度</span>
+                                        <span class="summary-value" id="preview-creativity">中等</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">内容深度</span>
+                                        <span class="summary-value" id="preview-depth">详细</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">专家参与</span>
+                                        <span class="summary-value" id="preview-expertise">高度</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">质量控制</span>
+                                        <span class="summary-value" id="preview-quality">严格</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="flow-navigation">
+                                <div>
+                                    <button class="btn btn-secondary" id="prev-step-3">
+                                        <i class="fas fa-arrow-left mr-2"></i>
+                                        上一步：选择模型
+                                    </button>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary" id="next-step-3">
+                                        完成配置，开始创作
+                                        <i class="fas fa-play ml-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤4: 开始创作 -->
+                <div class="step-content" id="step4-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="mb-0">
+                                <i class="fas fa-rocket mr-2"></i>
+                                开始创作之旅
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- 成功提示 -->
+                            <div class="text-center py-8">
+                                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-check text-green-600 text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-gray-900 mb-2">配置完成！</h3>
+                                <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                                    您已完成所有必要配置，可以开始创作属于您的精彩小说了。
+                                </p>
+                            </div>
+
+                            <!-- 最终配置摘要 -->
+                            <div class="config-summary mb-8">
+                                <div class="summary-title">最终配置摘要</div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div class="text-center p-4 bg-blue-50 rounded-xl">
+                                        <div class="text-2xl font-bold text-blue-600" id="final-title-count">1</div>
+                                        <div class="text-sm text-blue-700">小说项目</div>
+                                    </div>
+                                    <div class="text-center p-4 bg-green-50 rounded-xl">
+                                        <div class="text-2xl font-bold text-green-600" id="final-chapter-count">10</div>
+                                        <div class="text-sm text-green-700">计划章节</div>
+                                    </div>
+                                    <div class="text-center p-4 bg-purple-50 rounded-xl">
+                                        <div class="text-2xl font-bold text-purple-600" id="final-word-count">30,000</div>
+                                        <div class="text-sm text-purple-700">目标字数</div>
+                                    </div>
+                                    <div class="text-center p-4 bg-orange-50 rounded-xl">
+                                        <div class="text-2xl font-bold text-orange-600" id="final-model">OpenAI</div>
+                                        <div class="text-sm text-orange-700">创作模型</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 下一步行动 -->
+                            <div class="space-y-4">
+                                <div class="hint-box">
+                                    <i class="fas fa-play-circle hint-icon"></i>
+                                    <div class="hint-content">
+                                        <div class="hint-title">开始创作</div>
+                                        <div class="hint-text">点击"开始创作"按钮，智能体系统将基于您的配置开始工作，首先生成详细的小说大纲。</div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <button class="btn btn-primary btn-lg py-4" id="start-creation-main">
+                                        <i class="fas fa-feather mr-2"></i>
+                                        开始创作
+                                        <div class="text-sm font-normal mt-1">基于当前配置启动创作</div>
+                                    </button>
+                                    
+                                    <button class="btn btn-secondary btn-lg py-4" id="save-and-export">
+                                        <i class="fas fa-save mr-2"></i>
+                                        保存配置
+                                        <div class="text-sm font-normal mt-1">保存配置供以后使用</div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="flow-navigation">
+                                <div>
+                                    <button class="btn btn-secondary" id="prev-step-4">
+                                        <i class="fas fa-arrow-left mr-2"></i>
+                                        上一步：参数调整
+                                    </button>
+                                </div>
+                                <div>
+                                    <a href="/writing" class="btn btn-success">
+                                        <i class="fas fa-external-link-alt mr-2"></i>
+                                        进入创作控制台
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4 class="footer-title">
+                        GeniusWriter
+                    </h4>
+                    <p class="text-sm">
+                        基于Claude Game Studios架构的AI小说创作平台
+                    </p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-title">配置状态</h4>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                            <span class="text-sm">配置流程就绪</span>
+                        </div>
+                        <div id="current-step-status" class="text-sm text-gray-600">步骤1/4：小说设置</div>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-title">快速帮助</h4>
+                    <ul class="footer-links">
+                        <li><a href="#" class="footer-link" id="config-help">配置指南</a></li>
+                        <li><a href="#" class="footer-link" id="model-help">模型选择</a></li>
+                        <li><a href="#" class="footer-link" id="param-help">参数说明</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-title">进度</h4>
+                    <div class="text-sm text-gray-400 space-y-1">
+                        <div>当前步骤: <span id="current-step-text">小说设置</span></div>
+                        <div>完成度: <span id="progress-percent">25%</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="text-sm">
+                    &copy; 2026 GeniusWriter - AI小说创作平台 | 基于Claude Game Studios架构
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
