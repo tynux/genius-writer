@@ -389,24 +389,95 @@ setup_nginx() {
     # 检查Nginx是否安装
     if ! command -v nginx >/dev/null 2>&1; then
         log_warning "Nginx未安装，尝试安装..."
+        
+        # 确保PKG_MANAGER已设置
+        if [ -z "$PKG_MANAGER" ] || [ "$PKG_MANAGER" = "unknown" ]; then
+            log_warning "无法确定包管理器，重新检测系统..."
+            detect_os
+        fi
+        
+        # 显示系统信息用于调试
+        log_info "系统信息: OS=$OS, VERSION=$VERSION, PKG_MANAGER=$PKG_MANAGER"
+        
         case $PKG_MANAGER in
             apt)
+                log_info "使用APT安装Nginx (Debian/Ubuntu)"
                 apt install -y nginx
                 ;;
             dnf|yum)
+                log_info "使用$PKG_MANAGER安装Nginx (RHEL/CentOS/Fedora)"
                 $PKG_MANAGER install -y nginx
                 ;;
             apk)
+                log_info "使用APK安装Nginx (Alpine)"
                 apk add nginx
                 ;;
             zypper)
+                log_info "使用Zypper安装Nginx (openSUSE)"
                 zypper install -y nginx
                 ;;
             *)
-                log_error "无法安装Nginx，请手动安装: nginx"
-                return 1
+                log_error "无法确定包管理器或系统不受支持"
+                log_warning "检测到的系统: $OS $VERSION"
+                log_warning "包管理器: $PKG_MANAGER"
+                
+                # 尝试检测常见的包管理器
+                log_info "尝试检测可用的包管理器..."
+                if command -v apt >/dev/null 2>&1; then
+                    log_info "检测到apt，尝试使用apt安装"
+                    apt install -y nginx
+                elif command -v yum >/dev/null 2>&1; then
+                    log_info "检测到yum，尝试使用yum安装"
+                    yum install -y nginx
+                elif command -v dnf >/dev/null 2>&1; then
+                    log_info "检测到dnf，尝试使用dnf安装"
+                    dnf install -y nginx
+                elif command -v apk >/dev/null 2>&1; then
+                    log_info "检测到apk，尝试使用apk安装"
+                    apk add nginx
+                elif command -v zypper >/dev/null 2>&1; then
+                    log_info "检测到zypper，尝试使用zypper安装"
+                    zypper install -y nginx
+                else
+                    log_error "未找到任何支持的包管理器"
+                    echo "=========================================="
+                    echo "无法自动安装Nginx，请手动安装："
+                    echo ""
+                    echo "根据您的系统，使用以下命令之一："
+                    echo "- Debian/Ubuntu: apt install nginx"
+                    echo "- RHEL/CentOS: yum install nginx 或 dnf install nginx"
+                    echo "- Alpine: apk add nginx"
+                    echo "- openSUSE: zypper install nginx"
+                    echo ""
+                    echo "或者，您可以："
+                    echo "1. 手动安装Nginx后重新运行此脚本"
+                    echo "2. 跳过Nginx配置，使用其他反向代理"
+                    echo "=========================================="
+                    
+                    read -p "是否跳过Nginx配置继续部署？(y/n): " -n 1 -r
+                    echo
+                    if [[ $REPLY =~ ^[Yy]$ ]]; then
+                        log_warning "跳过Nginx配置，请手动配置反向代理"
+                        return 0
+                    else
+                        log_error "部署中止，请手动安装Nginx后重试"
+                        return 1
+                    fi
+                fi
                 ;;
         esac
+        
+        # 检查安装是否成功
+        if ! command -v nginx >/dev/null 2>&1; then
+            log_error "Nginx安装失败"
+            log_warning "请手动安装Nginx，然后重新运行此脚本"
+            log_warning "或者编辑脚本跳过Nginx配置"
+            return 1
+        else
+            log_success "Nginx安装成功"
+        fi
+    else
+        log_success "Nginx已安装"
     fi
     
     # 确定Nginx配置目录结构
