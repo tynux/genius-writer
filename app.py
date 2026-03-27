@@ -11,6 +11,7 @@ from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
+from sqlalchemy import text
 
 # 加载环境变量
 load_dotenv()
@@ -134,7 +135,7 @@ def health_check():
     try:
         from database import db
         # 尝试执行简单查询
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
     except Exception as e:
         logger.error(f"数据库连接检查失败: {e}")
         db_status = 'unhealthy'
