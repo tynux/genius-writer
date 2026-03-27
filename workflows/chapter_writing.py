@@ -7,6 +7,7 @@
 import os
 import json
 import logging
+import re
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 
@@ -477,68 +478,161 @@ class ChapterWritingWorkflow:
                            characters: List[Dict[str, Any]], writing_style: str, target_words: int) -> str:
         """构建章节创作提示"""
         
-        # 构建人物描述
+        # 构建详细人物描述
         character_descriptions = []
         for char in characters[:5]:  # 最多5个主要人物
-            char_desc = f"- {char.get('name', '未知人物')}: {char.get('description', '无描述')}"
-            character_descriptions.append(char_desc)
+            name = char.get('name', '未知人物')
+            role = char.get('role', '未知角色')
+            desc = char.get('description', '无描述')
+            personality = char.get('personality', '无性格描述')
+            character_descriptions.append(f"- {name} ({role}): {desc}。性格特点：{personality}")
         
         characters_text = '\n'.join(character_descriptions) if character_descriptions else "无详细人物信息"
         
-        prompt = f"""请创作小说《{novel_info['title']}》的第{chapter_number}章：{chapter_outline.get('title', f'第{chapter_number}章')}
+        # 构建详细提示
+        prompt = f"""你是一位专业的{novel_info['genre']}小说作家，请创作小说《{novel_info['title']}》的第{chapter_number}章。
 
-小说类型：{novel_info['genre']}
-写作风格：{writing_style}
-目标字数：约{target_words}字
+**小说基本信息：**
+- 标题：《{novel_info['title']}》
+- 类型：{novel_info['genre']}
+- 写作风格：{writing_style}
+- 本章标题：{chapter_outline.get('title', f'第{chapter_number}章')}
+- **目标字数：严格控制在{target_words}字左右**（±10%）
 
-本章大纲：
+**本章详细规划：**
 {chapter_outline.get('summary', '无详细大纲')}
 
-关键情节点：
-{', '.join(chapter_outline.get('key_points', ['无关键点']))}
+**关键情节点：**
+{chr(10).join(f"- {point}" for point in chapter_outline.get('key_points', ['无关键点']))}
 
-出场人物：
+**出场人物：**
 {characters_text}
 
-情感基调：{chapter_outline.get('tone', '适中')}
+**情感基调：** {chapter_outline.get('tone', '适中')}
 
-{"上一章摘要：" + previous_chapter_summary if previous_chapter_summary else "这是小说的开头章节。"}
+{"**上一章摘要：**" + previous_chapter_summary if previous_chapter_summary else "**这是小说的开头章节。**"}
 
-请创作完整的章节内容，要求：
-1. 遵循本章大纲和关键情节点
-2. 保持人物性格和关系的一致性
-3. 使用指定的写作风格
-4. 控制字数在目标范围内
-5. 章节结尾自然过渡，为下一章铺垫
-6. 包含适当的场景描写、人物对话和心理描写
+**创作要求（重要）：**
 
-请确保章节内容流畅自然，情节发展合理，符合小说整体风格。"""
+1. **字数控制（最关键）：**
+   - 必须严格控制在{target_words}字左右（{int(target_words*0.9)}-{int(target_words*1.1)}字）
+   - 如果内容过多，精简次要描写，保留核心情节
+   - 如果内容不足，丰富细节描写、对话或内心独白
+
+2. **结构要求：**
+   - 必须有明确的开场、发展、高潮、结尾
+   - 开场要吸引人，快速进入情节
+   - 发展部分要推进故事，发展人物
+   - 高潮部分要有张力，解决本章核心冲突
+   - 结尾要有收束，并为下一章铺垫悬念
+
+3. **内容质量：**
+   - 严格遵循本章大纲和关键情节点
+   - 保持人物性格、语言风格的一致性
+   - 使用{writing_style}的写作风格
+   - 包含适当的场景描写（视觉、听觉、嗅觉等细节）
+   - 包含生动的人物对话（符合人物性格）
+   - 包含合理的心理描写（展现人物内心）
+   - 情节发展要有逻辑，符合故事整体脉络
+
+4. **章节过渡：**
+   - 开头要与上一章自然衔接（如果是开头章节则直接开始）
+   - 结尾要为下一章埋下伏笔或制造期待
+   - 保持时间、地点、情节的连贯性
+
+**特别提醒：** 
+- 这是第{chapter_number}章，请考虑在整部小说中的位置和功能
+- 如果是开头章节，要快速建立世界观和人物关系
+- 如果是中间章节，要推进主线，发展次要情节
+- 如果是结尾章节，要收束所有线索，圆满结束
+
+请创作完整、高质量的第{chapter_number}章内容，确保字数准确、情节完整、人物鲜活。"""
         
         return prompt
     
     def analyze_chapter_content(self, content: str, target_words: int) -> Dict[str, Any]:
         """分析章节内容"""
-        # 简单分析
-        word_count = len(content)
+        # 计算中文字数（更准确的方法）
+        import re
+        # 移除标点符号和空格，统计中文字符
+        chinese_chars = re.findall(r'[\u4e00-\u9fff]', content)
+        word_count = len(chinese_chars)
+        
+        # 也统计总字符数作为参考
+        total_chars = len(content)
         
         # 检查段落结构
-        paragraphs = content.split('\n\n')
-        paragraph_count = len([p for p in paragraphs if p.strip()])
+        paragraphs = [p for p in content.split('\n\n') if p.strip()]
+        paragraph_count = len(paragraphs)
+        avg_paragraph_length = word_count / max(paragraph_count, 1)
         
-        # 检查对话比例（简单统计）
-        dialogue_lines = sum(1 for line in content.split('\n') if ':"' in line or ':"' in line or '说：' in line or '问道：' in line)
-        total_lines = len(content.split('\n'))
+        # 检查对话比例（更准确的统计）
+        dialogue_patterns = [':"', ':"', '说：', '说道：', '问道：', '喊道：', '回答：', '问：', '答：']
+        dialogue_lines = 0
+        lines = content.split('\n')
+        for line in lines:
+            line_stripped = line.strip()
+            if any(pattern in line_stripped for pattern in dialogue_patterns):
+                dialogue_lines += 1
+        
+        total_lines = len(lines)
         dialogue_ratio = dialogue_lines / max(total_lines, 1)
         
-        # 评估字数符合度
+        # 评估字数符合度（更严格的标准）
         word_target_ratio = word_count / max(target_words, 1)
+        
+        # 更详细的评估
+        if 0.9 <= word_target_ratio <= 1.1:
+            word_assessment = '优秀（±10%）'
+            word_score = 5
+        elif 0.8 <= word_target_ratio <= 1.2:
+            word_assessment = '良好（±20%）'
+            word_score = 4
+        elif 0.7 <= word_target_ratio <= 1.3:
+            word_assessment = '合格（±30%）'
+            word_score = 3
+        else:
+            word_assessment = '需要调整'
+            word_score = 1 if word_target_ratio < 0.7 else 2
+        
+        # 段落结构评估
+        if paragraph_count >= 5 and avg_paragraph_length <= 500:
+            paragraph_assessment = '良好'
+            paragraph_score = 4
+        elif paragraph_count >= 3:
+            paragraph_assessment = '合格'
+            paragraph_score = 3
+        else:
+            paragraph_assessment = '需要优化'
+            paragraph_score = 2
+        
+        # 对话比例评估（根据不同体裁调整）
+        genre_appropriate_dialogue = 0.2 <= dialogue_ratio <= 0.4  # 一般小说的合理对话比例
+        dialogue_assessment = '良好' if genre_appropriate_dialogue else '需调整'
+        dialogue_score = 4 if genre_appropriate_dialogue else 2
+        
+        # 总体评分
+        overall_score = (word_score + paragraph_score + dialogue_score) / 3
         
         return {
             'word_count': word_count,
-            'paragraph_count': paragraph_count,
-            'dialogue_ratio': round(dialogue_ratio, 2),
+            'total_chars': total_chars,
+            'target_words': target_words,
+            'word_difference': word_count - target_words,
             'word_target_ratio': round(word_target_ratio, 2),
-            'assessment': '良好' if 0.7 <= word_target_ratio <= 1.3 else '需要调整',
+            'word_assessment': word_assessment,
+            'word_score': word_score,
+            'paragraph_count': paragraph_count,
+            'avg_paragraph_length': round(avg_paragraph_length, 1),
+            'paragraph_assessment': paragraph_assessment,
+            'paragraph_score': paragraph_score,
+            'dialogue_lines': dialogue_lines,
+            'total_lines': total_lines,
+            'dialogue_ratio': round(dialogue_ratio, 2),
+            'dialogue_assessment': dialogue_assessment,
+            'dialogue_score': dialogue_score,
+            'overall_score': round(overall_score, 1),
+            'quality_level': '优秀' if overall_score >= 4 else '良好' if overall_score >= 3 else '合格' if overall_score >= 2 else '需要改进',
         }
     
     def check_consistency_with_outline(self, chapter_content: str, chapter_outline: Dict[str, Any], 
