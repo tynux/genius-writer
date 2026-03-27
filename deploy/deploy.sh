@@ -77,27 +77,153 @@ check_dns() {
     fi
 }
 
+# 检测操作系统和包管理器
+detect_os() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS=$ID
+        VERSION=$VERSION_ID
+    elif [ -f /etc/redhat-release ]; then
+        OS="rhel"
+        VERSION=$(cat /etc/redhat-release | sed -E 's/.*release ([0-9]+(\.[0-9]+)?).*/\1/')
+    elif [ -f /etc/alpine-release ]; then
+        OS="alpine"
+        VERSION=$(cat /etc/alpine-release)
+    else
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        VERSION=$(uname -r)
+    fi
+    
+    # 确定包管理器
+    case $OS in
+        ubuntu|debian|raspbian)
+            PKG_MANAGER="apt"
+            ;;
+        centos|rhel|fedora|amzn)
+            if command -v dnf >/dev/null 2>&1; then
+                PKG_MANAGER="dnf"
+            else
+                PKG_MANAGER="yum"
+            fi
+            ;;
+        alpine)
+            PKG_MANAGER="apk"
+            ;;
+        opensuse*|sles)
+            PKG_MANAGER="zypper"
+            ;;
+        *)
+            PKG_MANAGER="unknown"
+            ;;
+    esac
+    
+    log_info "检测到操作系统: $OS $VERSION, 包管理器: $PKG_MANAGER"
+}
+
 # 安装基础依赖
 install_dependencies() {
     log_info "安装系统依赖..."
     
-    apt update
-    apt install -y curl wget git vim htop net-tools \
-        python3.11 python3.11-venv python3.11-dev python3-pip \
-        nginx certbot python3-certbot-nginx \
-        fail2ban ufw software-properties-common
+    case $PKG_MANAGER in
+        apt)
+            apt update
+            apt install -y curl wget git vim htop net-tools \
+                python3 python3-venv python3-dev python3-pip \
+                nginx certbot python3-certbot-nginx \
+                fail2ban ufw software-properties-common
+            ;;
+        dnf|yum)
+            $PKG_MANAGER update -y
+            $PKG_MANAGER install -y curl wget git vim htop net-tools \
+                python3 python3-devel python3-pip \
+                nginx firewalld policycoreutils-python-utils
+            
+            # CentOS/RHEL需要启用EPEL仓库获取certbot
+            if [ "$OS" = "centos" ] || [ "$OS" = "rhel" ]; then
+                $PKG_MANAGER install -y epel-release
+            fi
+            
+            # 安装certbot（来自EPEL或默认仓库）
+            $PKG_MANAGER install -y certbot python3-certbot-nginx
+            ;;
+        apk)
+            apk update
+            apk add curl wget git vim htop net-tools \
+                python3 py3-pip python3-dev \
+                nginx certbot py3-certbot-nginx \
+                fail2ban ufw
+            ;;
+        zypper)
+            zypper refresh
+            zypper install -y curl wget git vim htop net-tools \
+                python3 python3-pip python3-devel \
+                nginx certbot python3-certbot-nginx \
+                fail2ban firewalld
+            ;;
+        *)
+            log_error "不支持的操作系统: $OS"
+            log_warning "请手动安装以下依赖："
+            echo "curl wget git python3 python3-pip nginx certbot"
+            read -p "是否继续？(可能需要手动安装依赖) (y/n): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                exit 1
+            fi
+            ;;
+    esac
+    
+    # 检查Python版本
+    if command -v python3.11 >/dev/null 2>&1; then
+        log_success "Python 3.11 已安装"
+    elif command -v python3 >/dev/null 2>&1; then
+        PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
+        log_info "检测到Python $PYTHON_VERSION"
+        if [[ "$PYTHON_VERSION" =~ ^3\.[8-9]|3\.1[0-9] ]]; then
+            log_success "Python $PYTHON_VERSION 版本符合要求"
+        else
+            log_warning "Python版本可能较低($PYTHON_VERSION)，建议升级到3.8+"
+        fi
+    else
+        log_error "Python未安装，请手动安装Python 3.8+"
+        exit 1
+    fi
 }
 
 # 配置防火墙
 configure_firewall() {
     log_info "配置防火墙..."
     
-    ufw --force enable
-    ufw allow 22/tcp  # SSH
-    ufw allow 80/tcp  # HTTP
-    ufw allow 443/tcp # HTTPS
-    ufw reload
-    log_success "防火墙配置完成"
+    case $OS in
+        ubuntu|debian)
+            ufw --force enable
+            ufw allow 22/tcp  # SSH
+            ufw allow 80/tcp  # HTTP
+            ufw allow 443/tcp # HTTPS
+            ufw reload
+            log_success "防火墙配置完成 (使用UFW)"
+            ;;
+        centos|rhel|fedora|amzn)
+            systemctl enable firewalld
+            systemctl start firewalld
+            firewall-cmd --permanent --add-service=ssh
+            firewall-cmd --permanent --add-service=http
+            firewall-cmd --permanent --add-service=https
+            firewall-cmd --reload
+            log_success "防火墙配置完成 (使用FirewallD)"
+            ;;
+        alpine)
+            # Alpine Linux使用iptables，这里只开放端口
+            iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+            iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+            iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+            iptables-save > /etc/iptables/rules.v4
+            log_success "防火墙配置完成 (使用iptables)"
+            ;;
+        *)
+            log_warning "不支持的操作系统 $OS，跳过防火墙配置"
+            log_warning "请手动配置防火墙规则：开放22, 80, 443端口"
+            ;;
+    esac
 }
 
 # 创建应用用户
@@ -105,8 +231,25 @@ create_app_user() {
     log_info "创建应用用户..."
     
     if ! id -u geniuswriter >/dev/null 2>&1; then
-        adduser --system --group --no-create-home --disabled-login geniuswriter
-        log_success "用户 geniuswriter 创建成功"
+        case $OS in
+            ubuntu|debian)
+                adduser --system --group --no-create-home --disabled-login geniuswriter
+                ;;
+            centos|rhel|fedora|amzn|alpine)
+                useradd -r -s /bin/false -M geniuswriter
+                ;;
+            *)
+                useradd -r -s /bin/false -M geniuswriter 2>/dev/null || \
+                adduser --system --group --no-create-home --disabled-login geniuswriter 2>/dev/null || \
+                log_error "无法创建用户，请手动创建: useradd -r -s /bin/false -M geniuswriter"
+                ;;
+        esac
+        
+        if id -u geniuswriter >/dev/null 2>&1; then
+            log_success "用户 geniuswriter 创建成功"
+        else
+            log_warning "用户创建失败，将以当前用户运行"
+        fi
     else
         log_warning "用户 geniuswriter 已存在"
     fi
@@ -276,10 +419,31 @@ EOF
 setup_ssl() {
     log_info "获取SSL证书..."
     
+    # 检查certbot是否安装
+    if ! command -v certbot >/dev/null 2>&1; then
+        log_error "certbot未安装，跳过SSL证书配置"
+        log_warning "请手动安装certbot并配置SSL证书"
+        return 1
+    fi
+    
+    # 获取certbot路径
+    CERTBOT_PATH=$(command -v certbot)
+    
+    # 运行certbot
     certbot --nginx -d ageniuswriter.com -d www.ageniuswriter.com --non-interactive --agree-tos
     
     # 设置自动续期
-    echo "0 0,12 * * * root /usr/bin/certbot renew --quiet" | tee -a /etc/crontab > /dev/null
+    if [ -f /etc/crontab ]; then
+        echo "0 0,12 * * * root $CERTBOT_PATH renew --quiet" | tee -a /etc/crontab > /dev/null
+        log_success "SSL证书自动续期已添加到crontab"
+    elif command -v crontab >/dev/null 2>&1; then
+        # 为root用户添加cron任务
+        (crontab -l 2>/dev/null; echo "0 0,12 * * * $CERTBOT_PATH renew --quiet") | crontab -
+        log_success "SSL证书自动续期已添加到root用户的crontab"
+    else
+        log_warning "未找到crontab，请手动设置证书自动续期"
+        log_warning "运行: $CERTBOT_PATH renew --quiet"
+    fi
     
     log_success "SSL证书配置完成"
 }
@@ -370,6 +534,7 @@ EOF
 main() {
     show_banner
     check_root
+    detect_os
     check_dns
     
     echo "选择部署模式："
