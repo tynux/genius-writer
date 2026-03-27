@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置 - GeniusWriter</title>
+    <link rel="stylesheet" href="/static/css/style-clean.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <i class="fas fa-book-open"></i>
+                <span>GeniusWriter</span>
+            </a>
+            <div class="nav-links">
+                <a href="/"><i class="fas fa-home"></i> 首页</a>
+                <a href="/config" class="active"><i class="fas fa-cog"></i> 配置</a>
+                <a href="/writing"><i class="fas fa-pen"></i> 创作</a>
+                <a href="#" id="back-to-home"><i class="fas fa-arrow-left"></i> 返回首页</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container config-container">
+        <div class="config-header">
+            <h1><i class="fas fa-cog"></i> 系统配置</h1>
+            <p class="subtitle">配置小说参数和大模型设置，为创作做好准备</p>
+        </div>
+
+        <div class="config-grid">
+            <!-- 左侧：小说配置 -->
+            <div class="config-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-book"></i> 小说配置</h2>
+                    <div class="section-actions">
+                        <button id="save-novel-config" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存配置
+                        </button>
+                        <button id="reset-novel-config" class="btn btn-secondary">
+                            <i class="fas fa-redo"></i> 重置
+                        </button>
+                    </div>
+                </div>
+
+                <div class="config-form">
+                    <!-- 基本信息 -->
+                    <div class="form-group">
+                        <label for="novel-title"><i class="fas fa-heading"></i> 小说标题</label>
+                        <input type="text" id="novel-title" placeholder="请输入小说标题，如：《锦绣乾坤》">
+                        <small class="form-help">建议标题具有吸引力，能反映小说主题</small>
+                    </div>
+
+                    <!-- 小说类型 -->
+                    <div class="form-group">
+                        <label for="novel-genre"><i class="fas fa-tags"></i> 小说类型</label>
+                        <select id="novel-genre">
+                            <option value="历史">历史小说</option>
+                            <option value="科幻">科幻小说</option>
+                            <option value="奇幻">奇幻小说</option>
+                            <option value="都市" selected>都市小说</option>
+                            <option value="悬疑">悬疑小说</option>
+                            <option value="武侠">武侠小说</option>
+                            <option value="言情">言情小说</option>
+                            <option value="军事">军事小说</option>
+                            <option value="玄幻">玄幻小说</option>
+                            <option value="轻小说">轻小说</option>
+                        </select>
+                        <small class="form-help">选择小说类型，影响智能体的专家选择和创作风格</small>
+                    </div>
+
+                    <!-- 章节配置 -->
+                    <div class="form-group">
+                        <label><i class="fas fa-list-ol"></i> 章节配置</label>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="chapters-count">章节数量</label>
+                                <input type="number" id="chapters-count" value="10" min="1" max="100">
+                            </div>
+                            <div class="form-col">
+                                <label for="words-per-chapter">每章字数</label>
+                                <div class="input-with-unit">
+                                    <input type="number" id="words-per-chapter" value="3000" min="500" max="10000">
+                                    <span class="unit">字</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="total-words">总字数预估</label>
+                                <div class="readonly-field" id="total-words">30,000字</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 写作风格 -->
+                    <div class="form-group">
+                        <label for="writing-style"><i class="fas fa-pen-fancy"></i> 写作风格</label>
+                        <select id="writing-style">
+                            <option value="文学性">文学性（偏传统文学）</option>
+                            <option value="通俗性" selected>通俗性（适合大众阅读）</option>
+                            <option value="网络文学">网络文学风格</option>
+                            <option value="传统文学">传统文学风格</option>
+                            <option value="轻小说风">轻小说风格</option>
+                        </select>
+                    </div>
+
+                    <!-- 额外要求 -->
+                    <div class="form-group">
+                        <label for="additional-info"><i class="fas fa-plus-circle"></i> 额外要求</label>
+                        <textarea id="additional-info" rows="3" placeholder="可以在这里添加特殊要求，如：
+- 希望突出人物内心描写
+- 需要增加历史真实性
+- 希望有反转情节
+- 其他特殊要求"></textarea>
+                    </div>
+
+                    <!-- 预览区域 -->
+                    <div class="preview-section">
+                        <h3><i class="fas fa-eye"></i> 配置预览</h3>
+                        <div class="preview-card">
+                            <div class="preview-content">
+                                <div><strong>标题：</strong><span id="preview-title">未设置</span></div>
+                                <div><strong>类型：</strong><span id="preview-genre">都市</span></div>
+                                <div><strong>章节：</strong><span id="preview-chapters">10章</span></div>
+                                <div><strong>字数：</strong><span id="preview-words">30,000字</span></div>
+                                <div><strong>风格：</strong><span id="preview-style">通俗性</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：模型配置 -->
+            <div class="config-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-brain"></i> 大模型配置</h2>
+                    <div class="section-actions">
+                        <button id="test-models" class="btn btn-success">
+                            <i class="fas fa-vial"></i> 测试连接
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 模型选择 -->
+                <div class="form-group">
+                    <label><i class="fas fa-robot"></i> 选择模型</label>
+                    <div class="model-selection" id="model-selection">
+                        <!-- 通过JS动态加载可用模型 -->
+                    </div>
+                    <div class="model-status" id="model-status">
+                        正在加载模型信息...
+                    </div>
+                </div>
+
+                <!-- 模型参数 -->
+                <div class="form-group">
+                    <label><i class="fas fa-sliders-h"></i> 模型参数</label>
+                    
+                    <div class="param-slider">
+                        <label for="temperature">创造性 (温度)</label>
+                        <div class="slider-container">
+                            <input type="range" id="temperature" min="0.1" max="1.0" step="0.1" value="0.7">
+                            <span class="slider-value" id="temperature-value">0.7</span>
+                        </div>
+                        <small class="form-help">值越高越有创造性，值越低越保守</small>
+                    </div>
+
+                    <div class="param-slider">
+                        <label for="max-tokens">最大生成长度</label>
+                        <div class="slider-container">
+                            <input type="range" id="max-tokens" min="500" max="8000" step="500" value="4000">
+                            <span class="slider-value" id="max-tokens-value">4,000 tokens</span>
+                        </div>
+                        <small class="form-help">控制每次生成的最大长度</small>
+                    </div>
+                </div>
+
+                <!-- API密钥配置 -->
+                <div class="form-group">
+                    <label><i class="fas fa-key"></i> API密钥配置</label>
+                    <div class="api-keys">
+                        <div class="api-key-item">
+                            <label for="openai-key">OpenAI API密钥</label>
+                            <div class="input-with-action">
+                                <input type="password" id="openai-key" placeholder="sk-...">
+                                <button class="btn-icon" data-action="toggle-visibility" data-target="openai-key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="api-key-status">
+                                <span class="status-indicator unknown" id="openai-status"></span>
+                                <span id="openai-status-text">未验证</span>
+                            </div>
+                        </div>
+                        
+                        <div class="api-key-item">
+                            <label for="deepseek-key">DeepSeek API密钥</label>
+                            <div class="input-with-action">
+                                <input type="password" id="deepseek-key" placeholder="sk-...">
+                                <button class="btn-icon" data-action="toggle-visibility" data-target="deepseek-key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="api-key-status">
+                                <span class="status-indicator unknown" id="deepseek-status"></span>
+                                <span id="deepseek-status-text">未验证</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 智能体配置 -->
+                <div class="form-group">
+                    <label><i class="fas fa-users"></i> 智能体配置</label>
+                    <div class="agent-config">
+                        <div class="agent-tier-config">
+                            <h4><i class="fas fa-crown"></i> 总监层参与度</h4>
+                            <div class="slider-container">
+                                <input type="range" id="tier1-involvement" min="0" max="100" value="100">
+                                <span class="slider-value" id="tier1-value">100%</span>
+                            </div>
+                            <small class="form-help">控制创意总监、文学总监的参与程度</small>
+                        </div>
+                        
+                        <div class="agent-tier-config">
+                            <h4><i class="fas fa-user-tie"></i> 专家层参与度</h4>
+                            <div class="slider-container">
+                                <input type="range" id="tier3-involvement" min="0" max="100" value="80">
+                                <span class="slider-value" id="tier3-value">80%</span>
+                            </div>
+                            <small class="form-help">控制各类型专家的参与程度</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 保存和开始按钮 -->
+                <div class="action-buttons">
+                    <button id="save-all-config" class="btn btn-primary btn-large">
+                        <i class="fas fa-save"></i> 保存所有配置
+                    </button>
+                    <button id="start-creation" class="btn btn-success btn-large">
+                        <i class="fas fa-play"></i> 开始创作
+                    </button>
+                </div>
+
+                <!-- 配置状态 -->
+                <div class="config-status">
+                    <h3><i class="fas fa-info-circle"></i> 配置状态</h3>
+                    <div class="status-list">
+                        <div class="status-item">
+                            <span class="status-dot unknown"></span>
+                            <span>小说配置：未保存</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-dot unknown"></span>
+                            <span>模型连接：未测试</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-dot unknown"></span>
+                            <span>智能体系统：未初始化</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 配置说明 -->
+        <div class="config-help">
+            <h3><i class="fas fa-question-circle"></i> 配置说明</h3>
+            <div class="help-content">
+                <div class="help-item">
+                    <h4>小说配置建议</h4>
+                    <ul>
+                        <li><strong>章节数量</strong>：建议10-30章，过长的小说可能需要分段创作</li>
+                        <li><strong>每章字数</strong>：网络小说建议2000-3000字，传统文学建议3000-5000字</li>
+                        <li><strong>写作风格</strong>：根据目标读者选择合适的风格</li>
+                    </ul>
+                </div>
+                <div class="help-item">
+                    <h4>模型配置建议</h4>
+                    <ul>
+                        <li><strong>创造性</strong>：历史小说建议0.6-0.8，科幻小说建议0.7-0.9</li>
+                        <li><strong>最大长度</strong>：章节创作建议4000-6000 tokens</li>
+                        <li><strong>模型选择</strong>：大纲生成建议使用GPT-4，章节创作可以使用DeepSeek</li>
+                    </ul>
+                </div>
+                <div class="help-item">
+                    <h4>智能体协调</h4>
+                    <p>系统采用三级代理架构，不同层级的代理负责不同任务。总监层负责整体规划，部门主管层负责具体设计，专家层负责专业内容创作。</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4><i class="fas fa-book-open"></i> GeniusWriter</h4>
+                    <p>基于Claude Game Studios架构的AI小说创作平台</p>
+                </div>
+                <div class="footer-section">
+                    <h4>当前配置</h4>
+                    <div id="current-config-summary">
+                        未保存配置
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>系统状态</h4>
+                    <div class="status-indicator">
+                        <span class="status-dot active"></span>
+                        <span>配置模式</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/config.js"></script>
+</body>
+</html>
