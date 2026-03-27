@@ -4,6 +4,7 @@ GeniusWriter - AI小说创作Web应用
 主Flask应用程序，提供Web界面和API接口
 """
 
+from sqlalchemy import text
 import os
 import json
 import logging
@@ -11,7 +12,6 @@ from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
-from sqlalchemy import text
 
 # 加载环境变量
 load_dotenv()
@@ -67,6 +67,42 @@ except ImportError as e:
         
         def generate(self, prompt, **kwargs):
             return {"text": f"模拟生成: {prompt[:50]}..."}
+    
+    class NovelPlanningWorkflow:
+        def __init__(self, agent_system=None, model_clients=None):
+            self.agent_system = agent_system
+            self.model_clients = model_clients or {}
+        
+        def execute(self, workflow_data):
+            logger.warning("使用模拟的小说规划工作流")
+            return {
+                'success': True,
+                'outline': {
+                    'title': workflow_data.get('title', '模拟小说'),
+                    'genre': workflow_data.get('genre', '都市'),
+                    'chapters': [
+                        {'number': i+1, 'title': f'第{i+1}章', 'summary': '模拟章节概要'} 
+                        for i in range(workflow_data.get('chapters', 10))
+                    ]
+                }
+            }
+    
+    class ChapterWritingWorkflow:
+        def __init__(self, agent_system=None, model_clients=None):
+            self.agent_system = agent_system
+            self.model_clients = model_clients or {}
+        
+        def execute(self, workflow_data):
+            logger.warning("使用模拟的章节创作工作流")
+            return {
+                'success': True,
+                'chapter': {
+                    'number': workflow_data.get('chapter_number', 1),
+                    'title': f'第{workflow_data.get("chapter_number", 1)}章',
+                    'content': f"这是模拟生成的章节内容，基于第{workflow_data.get('chapter_number', 1)}章。\n\n本章大约{workflow_data.get('target_words', 3000)}字，包含基本的情节发展、人物对话和环境描写。\n\n（这是模拟内容，实际创作需要使用真实的工作流。）",
+                    'word_count': workflow_data.get('target_words', 3000)
+                }
+            }
     
     logger.info("使用模拟模块启动应用")
 
