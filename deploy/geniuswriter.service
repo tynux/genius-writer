@@ -1,0 +1,53 @@
+[Unit]
+Description=GeniusWriter AI Novel Creation System
+Documentation=https://github.com/tynux/genius-writer
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=geniuswriter
+Group=geniuswriter
+WorkingDirectory=/opt/geniuswriter
+Environment="PATH=/opt/geniuswriter/venv/bin"
+Environment="PYTHONPATH=/opt/geniuswriter"
+EnvironmentFile=/opt/geniuswriter/.env
+
+# 启动命令
+ExecStart=/opt/geniuswriter/venv/bin/gunicorn \
+  --name geniuswriter \
+  --workers 3 \
+  --worker-class gevent \
+  --bind 0.0.0.0:8000 \
+  --timeout 120 \
+  --access-logfile /opt/geniuswriter/logs/access.log \
+  --error-logfile /opt/geniuswriter/logs/error.log \
+  --log-level info \
+  --capture-output \
+  --enable-stdio-inheritance \
+  app:app
+
+# 重启策略
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+# 资源限制
+LimitNOFILE=65535
+LimitNPROC=65535
+
+# 安全设置
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/geniuswriter/data /opt/geniuswriter/logs /opt/geniuswriter/uploads
+
+# 日志配置
+StandardOutput=append:/opt/geniuswriter/logs/stdout.log
+StandardError=append:/opt/geniuswriter/logs/stderr.log
+SyslogIdentifier=geniuswriter
+
+[Install]
+WantedBy=multi-user.target
