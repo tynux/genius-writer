@@ -27,8 +27,18 @@ class DeepSeekClient:
             self.simulated = False
             try:
                 from openai import OpenAI
-                self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
-                logger.info("DeepSeek客户端初始化成功")
+                import openai
+                # 尝试不带proxies参数初始化
+                try:
+                    self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+                    logger.info("DeepSeek客户端初始化成功 (不带proxies)")
+                except TypeError as e:
+                    if 'proxies' in str(e):
+                        # 尝试带proxies=None初始化
+                        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url, proxies=None)
+                        logger.info("DeepSeek客户端初始化成功 (带proxies=None)")
+                    else:
+                        raise
             except ImportError:
                 logger.warning("未安装openai库，将使用模拟模式")
                 self.simulated = True

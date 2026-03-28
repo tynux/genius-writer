@@ -343,6 +343,9 @@ DATABASE_URL=sqlite:////opt/geniuswriter/data/genius_writer.db
 UPLOAD_FOLDER=/opt/geniuswriter/uploads
 MAX_CONTENT_LENGTH=16777216
 
+# SSL证书配置
+SSL_EMAIL=admin@ageniuswriter.com
+
 # 可选：API密钥配置
 # OPENAI_API_KEY=your-key-here
 # DEEPSEEK_API_KEY=your-key-here
@@ -760,7 +763,12 @@ setup_ssl() {
     
     # 运行certbot
     log_info "运行certbot获取SSL证书..."
-    certbot --nginx -d ageniuswriter.com -d www.ageniuswriter.com --non-interactive --agree-tos
+    
+    # 设置SSL邮箱（从环境变量或使用默认值）
+    SSL_EMAIL=${SSL_EMAIL:-"admin@ageniuswriter.com"}
+    log_info "使用邮箱: $SSL_EMAIL 注册SSL证书"
+    
+    certbot --nginx -d ageniuswriter.com -d www.ageniuswriter.com --non-interactive --agree-tos --email "$SSL_EMAIL"
     
     # 设置自动续期
     log_info "设置SSL证书自动续期..."

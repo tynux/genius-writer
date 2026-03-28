@@ -8,7 +8,12 @@ class ConfigPage {
         this.configData = {
             novel: {},
             models: {},
-            agents: {}
+            agents: {},
+            workflows: {
+                qualityCheck: true,
+                autoFormat: true,
+                versioning: false
+            }
         };
         
         this.currentConfig = {};
@@ -244,6 +249,80 @@ class ConfigPage {
                 this.updateConfigStatus();
             });
         }
+        
+        // 工作流复选框处理
+        this.initCheckboxEvents();
+        
+        // 模型选择切换
+        this.initModelSelectionEvents();
+    }
+    
+    initModelSelectionEvents() {
+        // 获取所有模型radio按钮
+        const modelRadios = document.querySelectorAll('input[name="primary-model"]');
+        if (modelRadios.length === 0) return;
+        
+        // 为每个radio按钮添加change事件
+        modelRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    this.handleModelChange(e.target.value);
+                }
+            });
+        });
+        
+        // 初始化显示当前选中的模型配置
+        const selectedRadio = document.querySelector('input[name="primary-model"]:checked');
+        if (selectedRadio) {
+            this.handleModelChange(selectedRadio.value);
+        }
+    }
+    
+    handleModelChange(selectedModel) {
+        console.log('模型切换至:', selectedModel);
+        
+        // 更新配置数据
+        this.configData.models.selected = selectedModel;
+        
+        // 显示/隐藏模型配置区域
+        const openaiConfig = document.getElementById('openai-config');
+        const deepseekConfig = document.getElementById('deepseek-config');
+        
+        if (openaiConfig) {
+            openaiConfig.style.display = selectedModel === 'openai' ? 'block' : 'none';
+        }
+        
+        if (deepseekConfig) {
+            deepseekConfig.style.display = selectedModel === 'deepseek' ? 'block' : 'none';
+        }
+        
+        // 更新模型状态显示
+        this.updateModelStatusDisplay(selectedModel);
+    }
+    
+    updateModelStatusDisplay(selectedModel) {
+        const openaiStatus = document.getElementById('openai-status');
+        const deepseekStatus = document.getElementById('deepseek-status');
+        
+        if (selectedModel === 'openai') {
+            if (openaiStatus) {
+                openaiStatus.textContent = '已选择';
+                openaiStatus.className = 'text-sm text-green-600';
+            }
+            if (deepseekStatus) {
+                deepseekStatus.textContent = '未选择';
+                deepseekStatus.className = 'text-sm text-gray-600';
+            }
+        } else if (selectedModel === 'deepseek') {
+            if (openaiStatus) {
+                openaiStatus.textContent = '未选择';
+                openaiStatus.className = 'text-sm text-gray-600';
+            }
+            if (deepseekStatus) {
+                deepseekStatus.textContent = '已选择';
+                deepseekStatus.className = 'text-sm text-green-600';
+            }
+        }
     }
     
     initButtonEvents() {
@@ -338,24 +417,39 @@ class ConfigPage {
     }
     
     initApiKeyEvents() {
-        // API密钥显示/隐藏切换
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('[data-action="toggle-visibility"]')) {
-                const button = e.target.closest('[data-action="toggle-visibility"]');
-                const targetId = button.dataset.target;
-                const input = document.getElementById(targetId);
-                
-                if (input) {
-                    if (input.type === 'password') {
-                        input.type = 'text';
-                        button.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        // OpenAI密钥显示/隐藏切换
+        const toggleOpenaiKeyBtn = document.getElementById('toggle-openai-key');
+        if (toggleOpenaiKeyBtn) {
+            toggleOpenaiKeyBtn.addEventListener('click', () => {
+                const openaiKeyInput = document.getElementById('openai-key');
+                if (openaiKeyInput) {
+                    if (openaiKeyInput.type === 'password') {
+                        openaiKeyInput.type = 'text';
+                        toggleOpenaiKeyBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
                     } else {
-                        input.type = 'password';
-                        button.innerHTML = '<i class="fas fa-eye"></i>';
+                        openaiKeyInput.type = 'password';
+                        toggleOpenaiKeyBtn.innerHTML = '<i class="fas fa-eye"></i>';
                     }
                 }
-            }
-        });
+            });
+        }
+        
+        // DeepSeek密钥显示/隐藏切换
+        const toggleDeepseekKeyBtn = document.getElementById('toggle-deepseek-key');
+        if (toggleDeepseekKeyBtn) {
+            toggleDeepseekKeyBtn.addEventListener('click', () => {
+                const deepseekKeyInput = document.getElementById('deepseek-key');
+                if (deepseekKeyInput) {
+                    if (deepseekKeyInput.type === 'password') {
+                        deepseekKeyInput.type = 'text';
+                        toggleDeepseekKeyBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                    } else {
+                        deepseekKeyInput.type = 'password';
+                        toggleDeepseekKeyBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                    }
+                }
+            });
+        }
         
         // API密钥输入验证
         const openaiKeyInput = document.getElementById('openai-key');
@@ -384,34 +478,68 @@ class ConfigPage {
     initSliderValues() {
         // 温度滑块
         const tempSlider = document.getElementById('temperature');
-        const tempValue = document.getElementById('temperature-value');
+        const tempValue = document.getElementById('temp-value');
         if (tempSlider && tempValue) {
-            tempValue.textContent = tempSlider.value;
-            this.configData.models.temperature = parseFloat(tempSlider.value);
+            // 滑块范围是0-20，对应0.0-2.0
+            const tempValueNum = parseFloat(tempSlider.value) / 10;
+            tempValue.textContent = tempValueNum.toFixed(1);
+            this.configData.models.temperature = tempValueNum;
+            
+            // 添加滑块change事件
+            tempSlider.addEventListener('input', () => {
+                const newTempValue = parseFloat(tempSlider.value) / 10;
+                tempValue.textContent = newTempValue.toFixed(1);
+                this.configData.models.temperature = newTempValue;
+                this.updateConfigStatus();
+            });
         }
         
-        // 最大tokens滑块
-        const tokensSlider = document.getElementById('max-tokens');
-        const tokensValue = document.getElementById('max-tokens-value');
-        if (tokensSlider && tokensValue) {
-            tokensValue.textContent = this.formatNumber(parseInt(tokensSlider.value)) + ' tokens';
-            this.configData.models.maxTokens = parseInt(tokensSlider.value);
+        // 最大tokens输入框（不是滑块）
+        const tokensInput = document.getElementById('max-tokens');
+        if (tokensInput) {
+            this.configData.models.maxTokens = parseInt(tokensInput.value) || 4000;
+            
+            // 添加输入事件
+            tokensInput.addEventListener('input', () => {
+                this.configData.models.maxTokens = parseInt(tokensInput.value) || 4000;
+                this.updateConfigStatus();
+            });
         }
         
         // 总监层参与度
         const tier1Slider = document.getElementById('tier1-involvement');
         const tier1Value = document.getElementById('tier1-value');
         if (tier1Slider && tier1Value) {
-            tier1Value.textContent = tier1Slider.value + '%';
-            this.configData.agents.tier1Involvement = parseInt(tier1Slider.value);
+            // 滑块值0-10对应0%-100%
+            const tier1Percent = parseInt(tier1Slider.value) * 10;
+            tier1Value.textContent = tier1Percent + '%';
+            this.configData.agents.tier1Involvement = tier1Percent / 100; // 存储为小数0-1.0
+            
+            // 添加滑块事件
+            tier1Slider.addEventListener('input', () => {
+                const newTier1Percent = parseInt(tier1Slider.value) * 10;
+                tier1Value.textContent = newTier1Percent + '%';
+                this.configData.agents.tier1Involvement = newTier1Percent / 100;
+                this.updateConfigStatus();
+            });
         }
         
         // 专家层参与度
         const tier3Slider = document.getElementById('tier3-involvement');
         const tier3Value = document.getElementById('tier3-value');
         if (tier3Slider && tier3Value) {
-            tier3Value.textContent = tier3Slider.value + '%';
-            this.configData.agents.tier3Involvement = parseInt(tier3Slider.value);
+            // 滑块值0-10对应0%-100%
+            const tier3Percent = parseInt(tier3Slider.value) * 10;
+            tier3Value.textContent = tier3Percent + '%';
+            this.configData.agents.tier3Involvement = tier3Percent / 100; // 存储为小数0-1.0
+            
+            // 添加滑块事件
+            tier3Slider.addEventListener('input', () => {
+                const newTier3Percent = parseInt(tier3Slider.value) * 10;
+                tier3Value.textContent = newTier3Percent + '%';
+                this.configData.agents.tier3Involvement = newTier3Percent / 100;
+                this.updateConfigStatus();
+            });
         }
     }
     
@@ -866,6 +994,38 @@ class ConfigPage {
         } catch (error) {
             console.error('开始创作失败:', error);
             window.app.showError('开始创作失败，请检查网络连接');
+        }
+    }
+    
+    initCheckboxEvents() {
+        // 质量检查复选框
+        const qualityCheckbox = document.getElementById('enable-quality-check');
+        if (qualityCheckbox) {
+            this.configData.workflows.qualityCheck = qualityCheckbox.checked;
+            qualityCheckbox.addEventListener('change', () => {
+                this.configData.workflows.qualityCheck = qualityCheckbox.checked;
+                this.updateConfigStatus();
+            });
+        }
+        
+        // 自动格式化复选框
+        const autoFormatCheckbox = document.getElementById('enable-auto-format');
+        if (autoFormatCheckbox) {
+            this.configData.workflows.autoFormat = autoFormatCheckbox.checked;
+            autoFormatCheckbox.addEventListener('change', () => {
+                this.configData.workflows.autoFormat = autoFormatCheckbox.checked;
+                this.updateConfigStatus();
+            });
+        }
+        
+        // 版本管理复选框
+        const versioningCheckbox = document.getElementById('enable-versioning');
+        if (versioningCheckbox) {
+            this.configData.workflows.versioning = versioningCheckbox.checked;
+            versioningCheckbox.addEventListener('change', () => {
+                this.configData.workflows.versioning = versioningCheckbox.checked;
+                this.updateConfigStatus();
+            });
         }
     }
     

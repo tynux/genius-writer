@@ -377,23 +377,45 @@ class NovelPlanningWorkflow:
         additional_info = config.get('additional_info', '')
         writing_style = config.get('writing_style', '通俗性')
         
-        prompt = f"""请为小说《{title}》创作完整的故事概念。
+        prompt = f"""你是一位专业的小说策划师，请为小说《{title}》创作详细完整的故事概念。
 
 小说类型：{genre}
 章节数量：{chapters}章
 每章字数：约{words_per_chapter}字
 写作风格：{writing_style}
+总字数：约{chapters * words_per_chapter}字
 
 {additional_info if additional_info else "无额外要求"}
 
-请提供以下内容：
-1. 核心故事概念（100-200字）
-2. 故事背景和世界观
-3. 主要冲突和主题
-4. 目标读者群体
-5. 预期的情感基调
+请提供以下详细内容：
+1. **核心故事概念**（200-300字）
+   - 一句话概括故事核心
+   - 主角的核心目标
+   - 故事的主要驱动力
 
-请确保故事概念具有独创性和吸引力，适合后续的人物设计和情节规划。"""
+2. **故事背景和世界观**（详细描述）
+   - 时代背景（古代/现代/未来/架空）
+   - 地理环境（城市/乡村/异世界）
+   - 社会结构（权力体系/文化特点）
+   - 特殊设定（如有魔法、科技等）
+
+3. **主要冲突和主题**
+   - 核心冲突（人与人/人与社会/人与自我/人与自然）
+   - 主题思想（成长、爱情、正义、自由等）
+   - 道德困境（如果有）
+
+4. **故事结构规划**
+   - 开端（第1-{max(3, chapters//5)}章）：引入主角、背景、触发事件
+   - 发展（第{max(4, chapters//5+1)}-{chapters*3//4}章）：冲突升级、人物发展、次要情节
+   - 高潮（第{chapters*3//4+1}-{chapters-1}章）：最终对决、核心冲突解决
+   - 结局（第{chapters}章）：问题解决、人物命运、主题升华
+
+5. **目标读者群体和预期效果**
+   - 主要读者年龄段
+   - 预期情感体验（悬疑紧张/温馨治愈/热血激昂等）
+   - 商业价值和市场定位
+
+请确保故事概念具有独创性、逻辑性和商业吸引力，为后续章节规划和人物设计提供坚实基础。"""
         
         return prompt
     
@@ -402,26 +424,66 @@ class NovelPlanningWorkflow:
         title = config['title']
         genre = config['genre']
         chapters = config['chapters']
+        words_per_chapter = config['words_per_chapter']
         
-        prompt = f"""请为小说《{title}》设计主要人物角色。
+        # 提取故事概念的核心部分
+        core_concept = story_concept.get('core_concept', '成长与冒险的故事')
+        if isinstance(core_concept, dict):
+            core_concept_text = core_concept.get('text', '成长与冒险的故事') if isinstance(core_concept, dict) else str(core_concept)
+        else:
+            core_concept_text = str(core_concept)
+        
+        prompt = f"""你是一位专业的角色设计师，请为小说《{title}》设计完整的人物体系。
 
 小说类型：{genre}
 章节数量：{chapters}章
-故事概念：{story_concept.get('core_concept', '成长与冒险的故事')}
+每章字数：约{words_per_chapter}字
+总字数：约{chapters * words_per_chapter}字
+故事核心概念：{core_concept_text[:500]}...
 
-请设计以下人物（至少3个主要人物）：
-1. 主人公（主角）
-2. 重要配角（至少2个）
-3. 反派角色（如适用）
+请设计以下人物体系：
 
-每个人物请提供：
-- 姓名和基本背景
-- 性格特点和心理特征
-- 人物弧线（成长变化）
-- 与其他人物的关系
-- 在故事中的作用
+1. **主人公（主角）** - 故事的核心人物
+   - 姓名、年龄、性别、外貌特征
+   - 出身背景、家庭环境、教育经历
+   - 核心性格特点（优点、缺点、矛盾点）
+   - 内心欲望、恐惧、梦想
+   - 初始状态 → 成长变化 → 最终状态（完整人物弧线）
+   - 核心技能或特殊能力
+   - 在故事中的主要作用
 
-请确保人物设计具有深度和复杂性，能够支撑整个故事的发展。"""
+2. **主要配角**（至少3个重要配角）
+   每个配角包括：
+   - 姓名、基本背景、与主角的关系
+   - 性格特点、在故事中的功能（导师、盟友、爱人、竞争对手等）
+   - 个人目标、与主角的互动方式
+   - 成长变化（如果有）
+
+3. **反派角色**（如适用）
+   - 姓名、背景、动机（为什么成为反派）
+   - 性格特点、能力、弱点
+   - 与主角的冲突本质（理念冲突/利益冲突/情感冲突）
+   - 是否可能转化或和解
+
+4. **次要人物**（功能性角色）
+   - 列出必要的功能性角色（如导师、帮手、阻碍者等）
+   - 简要说明每个角色的作用
+
+5. **人物关系网**
+   - 人物之间的关系图谱
+   - 主要矛盾关系
+   - 情感发展线（友情、爱情、亲情、师徒情等）
+
+6. **人物与情节的关联**
+   - 每个人物如何推动情节发展
+   - 关键情节节点上人物的作用
+   - 人物命运如何与主题呼应
+
+请确保人物设计：
+- 具有深度和复杂性，避免脸谱化
+- 人物动机合理，行为符合性格
+- 人物关系有张力，能制造戏剧冲突
+- 支持{chapters}章的故事发展需要"""
         
         return prompt
     
@@ -431,30 +493,92 @@ class NovelPlanningWorkflow:
         genre = config['genre']
         chapters = config['chapters']
         words_per_chapter = config['words_per_chapter']
+        total_words = chapters * words_per_chapter
         
-        prompt = f"""请为小说《{title}》规划完整的章节结构。
+        # 准备人物信息摘要
+        characters_summary = "主要人物："
+        if isinstance(characters, dict) and 'characters' in characters:
+            for char in characters['characters'][:5]:  # 只显示前5个主要人物
+                if isinstance(char, dict):
+                    name = char.get('name', '未知人物')
+                    role = char.get('role', '未知角色')
+                    desc = char.get('description', '无描述')[:100]
+                    characters_summary += f"\n- {name} ({role}): {desc}"
+        else:
+            characters_summary = str(characters)[:500]
+        
+        prompt = f"""你是一位专业的编剧和故事架构师，请为小说《{title}》规划详细完整的章节大纲。
 
-小说类型：{genre}
-章节数量：{chapters}章
-每章字数：约{words_per_chapter}字
-故事概念：{story_concept.get('core_concept', '成长与冒险的故事')}
+小说基本信息：
+- 标题：《{title}》
+- 类型：{genre}
+- 总章节：{chapters}章
+- 每章字数：约{words_per_chapter}字
+- 总字数：约{total_words}字
+- 写作风格：{config.get('writing_style', '通俗性')}
 
-主要人物：
-{json.dumps(characters, ensure_ascii=False, indent=2)}
+故事核心概念：
+{story_concept.get('core_concept', '成长与冒险的故事')[:800]}
 
-请按照经典的三幕剧结构（开端、发展、高潮、结局）规划章节：
-1. 第一幕：开端（1-{max(3, chapters//5)}章）- 引入人物、背景和主要冲突
-2. 第二幕：发展（{max(4, chapters//5+1)}-{chapters*3//4}章）- 情节展开、冲突升级、人物发展
-3. 第三幕：高潮和结局（{chapters*3//4+1}-{chapters}章）- 最终冲突、问题解决、故事收尾
+{characters_summary}
 
-请为每一章提供：
-- 章节标题
-- 主要内容概要（100-200字）
-- 关键情节点
-- 出场人物
-- 情感基调
+请按照以下要求规划完整的{chapters}章大纲：
 
-请确保章节结构合理，情节发展有节奏感，每章都有明确的起承转合。"""
+**整体故事结构（经典三幕剧）：**
+1. **第一幕：开端**（第1-{max(3, chapters//5)}章，约{max(3, chapters//5) * words_per_chapter}字）
+   - 引入主角和世界观
+   - 建立初始状态和日常
+   - 触发事件（激励事件）
+   - 主角接受挑战/踏上旅程
+
+2. **第二幕：发展**（第{max(4, chapters//5+1)}-{chapters*3//4}章，约{(chapters*3//4 - max(4, chapters//5+1) + 1) * words_per_chapter}字）
+   - 冲突升级，困难增加
+   - 人物成长和关系发展
+   - 次要情节展开
+   - 中点转折（重大发现或失败）
+
+3. **第三幕：高潮和结局**（第{chapters*3//4+1}-{chapters}章，约{(chapters - chapters*3//4) * words_per_chapter}字）
+   - 最终冲突前的准备
+   - 高潮对决（情感/动作/智慧高潮）
+   - 问题解决和主题揭示
+   - 结局收尾和人物命运交代
+
+**请为每一章提供详细规划：**
+
+第1章：引入
+- 章节标题（吸引人的标题）
+- 开场场景（具体的时间、地点、事件）
+- 主要情节（100-150字详细描述）
+- 出场人物（主角必须出场，其他相关人物）
+- 关键情节点（本章最重要的情节转折）
+- 情感基调（紧张、温馨、悬疑等）
+- 章节结尾（悬念或过渡到下章）
+- 预估字数：约{words_per_chapter}字
+
+第2章：发展
+- ...（同样详细规划）
+
+...（依次规划所有{chapters}章）
+
+第{chapters}章：结局
+- 章节标题（体现结局感的标题）
+- 最终场景描述
+- 主要情节（完整解决所有主线）
+- 出场人物（所有重要人物结局交代）
+- 关键情节点（最终解决）
+- 情感基调（圆满、悲壮、开放式等）
+- 章节结尾（故事最终收尾）
+- 预估字数：约{words_per_chapter}字
+
+**额外要求：**
+1. 确保情节发展有节奏感，张弛有度
+2. 每章都有明确的起承转合
+3. 人物发展要连贯，性格变化合理
+4. 伏笔和照应要精心设计
+5. 情感线要自然发展
+6. 考虑商业性和读者期待
+
+请输出完整详细的{chapters}章大纲，这将直接用于后续的章节创作。"""
         
         return prompt
     
