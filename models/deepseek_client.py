@@ -28,22 +28,49 @@ class DeepSeekClient:
             try:
                 from openai import OpenAI
                 import openai
-                # 尝试不带proxies参数初始化
-                try:
-                    self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
-                    logger.info("DeepSeek客户端初始化成功 (不带proxies)")
-                except TypeError as e:
-                    if 'proxies' in str(e):
-                        # 尝试带proxies=None初始化
-                        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url, proxies=None)
-                        logger.info("DeepSeek客户端初始化成功 (带proxies=None)")
-                    else:
-                        raise
+                
+                # 记录openai版本，便于调试
+                openai_version = getattr(openai, '__version__', 'unknown')
+                logger.info(f"使用openai库版本: {openai_version}")
+                
+                # 简单版本检测：检查openai版本号
+                # openai 1.3.0使用旧式API，新版本使用新式API
+                if openai_version.startswith('1.3.') or openai_version == '1.3.0' or openai_version.startswith('1.2.') or openai_version.startswith('1.1.') or openai_version.startswith('1.0.'):
+                    logger.info(f"检测到openai {openai_version}版本，使用旧式API")
+                    # 设置全局API密钥和base_url
+                    openai.api_key = self.api_key
+                    openai.base_url = self.base_url
+                    # 标记为使用旧式API
+                    self.use_legacy_api = True
+                    self.client = None
+                    logger.info("DeepSeek客户端初始化成功 (旧式API)")
+                else:
+                    logger.info(f"检测到openai {openai_version}版本，尝试使用新式客户端API")
+                    # 对于较新版本，尝试使用标准客户端
+                    try:
+                        # 首先尝试不带proxies参数
+                        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+                        self.use_legacy_api = False
+                        logger.info("DeepSeek客户端初始化成功 (新式API，不带proxies)")
+                    except TypeError as e:
+                        if 'proxies' in str(e):
+                            # 尝试带proxies=None
+                            try:
+                                self.client = OpenAI(api_key=self.api_key, base_url=self.base_url, proxies=None)
+                                self.use_legacy_api = False
+                                logger.info("DeepSeek客户端初始化成功 (新式API，带proxies=None)")
+                            except Exception as e2:
+                                logger.error(f"新式API初始化失败: {e2}")
+                                raise
+                        else:
+                            raise
+                    
             except ImportError:
                 logger.warning("未安装openai库，将使用模拟模式")
                 self.simulated = True
             except Exception as e:
                 logger.error(f"DeepSeek客户端初始化失败: {e}")
+                logger.info("将使用模拟模式")
                 self.simulated = True
     
     def generate(self, 
@@ -64,27 +91,54 @@ class DeepSeekClient:
                 {"role": "user", "content": prompt}
             ]
             
-            # 调用DeepSeek API
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                **kwargs
-            )
-            
-            # 解析响应
-            result = {
-                'text': response.choices[0].message.content,
-                'model': model,
-                'usage': {
-                    'prompt_tokens': response.usage.prompt_tokens,
-                    'completion_tokens': response.usage.completion_tokens,
-                    'total_tokens': response.usage.total_tokens,
-                },
-                'finish_reason': response.choices[0].finish_reason,
-                'timestamp': datetime.now().isoformat(),
-            }
+            # 根据API类型调用不同的方法
+            if hasattr(self, 'use_legacy_api') and self.use_legacy_api:
+                logger.info(f"使用旧式API调用DeepSeek (模型: {model})")
+                # 旧式API (openai 1.3.0)
+                import openai
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    **kwargs
+                )
+                
+                # 解析响应 (旧式API格式)
+                result = {
+                    'text': response.choices[0].message.content,
+                    'model': model,
+                    'usage': {
+                        'prompt_tokens': response.usage.get('prompt_tokens', 0),
+                        'completion_tokens': response.usage.get('completion_tokens', 0),
+                        'total_tokens': response.usage.get('total_tokens', 0),
+                    },
+                    'finish_reason': response.choices[0].finish_reason,
+                    'timestamp': datetime.now().isoformat(),
+                }
+            else:
+                logger.info(f"使用新式客户端API调用DeepSeek (模型: {model})")
+                # 新式API (openai >= 1.4.0)
+                response = self.client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    **kwargs
+                )
+                
+                # 解析响应 (新式API格式)
+                result = {
+                    'text': response.choices[0].message.content,
+                    'model': model,
+                    'usage': {
+                        'prompt_tokens': response.usage.prompt_tokens,
+                        'completion_tokens': response.usage.completion_tokens,
+                        'total_tokens': response.usage.total_tokens,
+                    },
+                    'finish_reason': response.choices[0].finish_reason,
+                    'timestamp': datetime.now().isoformat(),
+                }
             
             logger.info(f"DeepSeek生成成功，使用 {result['usage']['total_tokens']} tokens")
             return result
