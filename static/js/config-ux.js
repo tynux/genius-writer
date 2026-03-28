@@ -5,6 +5,7 @@
 
 class ConfigUX {
     constructor() {
+        console.log('🔧 GeniusWriter ConfigUX 构造函数调用');
         this.configData = {
             step: 1,
             novel: {
@@ -42,11 +43,12 @@ class ConfigUX {
     }
     
     async init() {
-        console.log('GeniusWriter UX配置页面初始化');
+        console.log('🚀 GeniusWriter UX配置页面初始化开始');
         
         // 加载保存的配置（如果有）
         await this.loadSavedConfig();
         
+        console.log('📋 初始化UI组件...');
         // 初始化UI组件
         this.initSteps();
         this.initModelCards();
@@ -58,37 +60,71 @@ class ConfigUX {
         // 更新UI状态
         this.updateAllDisplays();
         
-        console.log('配置页面初始化完成');
+        console.log('✅ 配置页面初始化完成');
+        console.log('📊 当前配置:', JSON.stringify(this.configData, null, 2));
     }
     
     // ==================== 步骤管理 ====================
     
     initSteps() {
+        console.log('🔘 初始化步骤导航...');
+        
         // 步骤点击事件
-        document.querySelectorAll('.flow-step').forEach(step => {
+        const steps = document.querySelectorAll('.flow-step');
+        console.log(`找到 ${steps.length} 个步骤指示器`);
+        
+        steps.forEach(step => {
             step.addEventListener('click', (e) => {
                 const stepNumber = parseInt(step.querySelector('.step-circle').dataset.step);
+                console.log(`👆 点击步骤指示器: 步骤 ${stepNumber}`);
                 this.goToStep(stepNumber);
             });
         });
         
         // 下一步按钮
-        document.getElementById('next-step-1')?.addEventListener('click', () => this.goToStep(2));
-        document.getElementById('next-step-2')?.addEventListener('click', () => this.goToStep(3));
-        document.getElementById('next-step-3')?.addEventListener('click', () => this.goToStep(4));
+        const nextStep1Btn = document.getElementById('next-step-1');
+        console.log(`下一步按钮1: ${nextStep1Btn ? '找到' : '未找到'}`);
+        nextStep1Btn?.addEventListener('click', () => {
+            console.log('👉 点击下一步按钮1 (前往步骤2)');
+            this.goToStep(2);
+        });
+        
+        document.getElementById('next-step-2')?.addEventListener('click', () => {
+            console.log('👉 点击下一步按钮2 (前往步骤3)');
+            this.goToStep(3);
+        });
+        document.getElementById('next-step-3')?.addEventListener('click', () => {
+            console.log('👉 点击下一步按钮3 (前往步骤4)');
+            this.goToStep(4);
+        });
         
         // 上一步按钮
-        document.getElementById('prev-step-2')?.addEventListener('click', () => this.goToStep(1));
-        document.getElementById('prev-step-3')?.addEventListener('click', () => this.goToStep(2));
-        document.getElementById('prev-step-4')?.addEventListener('click', () => this.goToStep(3));
+        document.getElementById('prev-step-2')?.addEventListener('click', () => {
+            console.log('👈 点击上一步按钮2 (返回步骤1)');
+            this.goToStep(1);
+        });
+        document.getElementById('prev-step-3')?.addEventListener('click', () => {
+            console.log('👈 点击上一步按钮3 (返回步骤2)');
+            this.goToStep(2);
+        });
+        document.getElementById('prev-step-4')?.addEventListener('click', () => {
+            console.log('👈 点击上一步按钮4 (返回步骤3)');
+            this.goToStep(3);
+        });
+        
+        console.log('✅ 步骤导航初始化完成');
     }
     
     goToStep(stepNumber) {
+        console.log(`🔄 尝试导航到步骤 ${stepNumber} (当前步骤: ${this.configData.step})`);
+        
         // 验证当前步骤
         if (!this.validateCurrentStep()) {
+            console.log(`❌ 步骤 ${this.configData.step} 验证失败，阻止导航`);
             return;
         }
         
+        console.log(`✅ 步骤验证通过，更新到步骤 ${stepNumber}`);
         // 更新步骤状态
         this.configData.step = stepNumber;
         
@@ -120,6 +156,8 @@ class ConfigUX {
         
         // 步骤特定初始化
         this.initStepSpecific(stepNumber);
+        
+        console.log(`🎯 成功导航到步骤 ${stepNumber}`);
     }
     
     validateCurrentStep() {
@@ -129,12 +167,32 @@ class ConfigUX {
             case 1:
                 // 验证小说设置
                 if (!this.configData.novel.title?.trim()) {
-                    this.showError('请填写小说标题');
-                    return false;
+                    // 自动填充默认标题
+                    const defaultTitle = `我的${this.configData.novel.genre || '都市'}小说`;
+                    this.configData.novel.title = defaultTitle;
+                    
+                    // 更新输入框显示
+                    const titleInput = document.getElementById('novel-title');
+                    if (titleInput) {
+                        titleInput.value = defaultTitle;
+                    }
+                    
+                    // 更新预览
+                    this.updateNovelPreview();
                 }
+                
                 if (!this.configData.novel.genre) {
-                    this.showError('请选择小说类型');
-                    return false;
+                    // 默认类型已经是'都市'，但再次确认
+                    this.configData.novel.genre = '都市';
+                    
+                    // 更新选择框显示
+                    const genreSelect = document.getElementById('novel-genre');
+                    if (genreSelect) {
+                        genreSelect.value = '都市';
+                    }
+                    
+                    // 更新预览
+                    this.updateNovelPreview();
                 }
                 return true;
                 
