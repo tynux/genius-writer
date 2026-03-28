@@ -141,10 +141,24 @@ class ConfigUX {
         // 验证当前步骤
         if (!this.validateCurrentStep()) {
             console.log(`❌ 步骤 ${this.configData.step} 验证失败，阻止导航`);
+            // 在控制台显示详细错误信息
+            console.error(`步骤${this.configData.step}验证失败，请检查输入`);
+            // 尝试显示alert，但如果被阻止，至少控制台有记录
+            try {
+                this.showError(`步骤${this.configData.step}验证失败，请检查输入`);
+            } catch (alertError) {
+                console.warn('Alert被浏览器阻止:', alertError);
+            }
             return;
         }
         
         console.log(`✅ 步骤验证通过，更新到步骤 ${stepNumber}`);
+        console.log(`📊 当前配置:`, {
+            title: this.configData.novel.title,
+            genre: this.configData.novel.genre,
+            model: this.configData.model.selected
+        });
+        
         // 更新步骤状态
         this.configData.step = stepNumber;
         
@@ -185,45 +199,91 @@ class ConfigUX {
     
     validateCurrentStep() {
         const currentStep = this.configData.step;
+        console.log(`🔍 验证步骤 ${currentStep}...`);
         
         switch (currentStep) {
             case 1:
+                console.log('📖 验证小说设置...');
+                console.log('📊 当前小说数据:', {
+                    title: this.configData.novel?.title,
+                    genre: this.configData.novel?.genre,
+                    chapters: this.configData.novel?.chapters
+                });
+                
                 // 验证小说设置
                 const novelTitle = this.configData.novel && this.configData.novel.title;
                 if (!novelTitle || !novelTitle.trim()) {
+                    console.log('⚠️ 小说标题为空，自动填充默认标题');
+                    
                     // 自动填充默认标题
                     const novelGenre = (this.configData.novel && this.configData.novel.genre) || '都市';
                     const defaultTitle = `我的${novelGenre}小说`;
+                    
+                    console.log(`📝 自动填充: 标题="${defaultTitle}", 类型="${novelGenre}"`);
+                    
                     if (this.configData.novel) {
                         this.configData.novel.title = defaultTitle;
+                        console.log('✅ 配置数据中的标题已更新');
                     }
                     
                     // 更新输入框显示
                     const titleInput = document.getElementById('novel-title');
                     if (titleInput) {
                         titleInput.value = defaultTitle;
+                        console.log('✅ 输入框值已更新');
+                        
+                        // 手动触发input事件，确保所有监听器更新
+                        try {
+                            titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            console.log('✅ input事件已触发');
+                        } catch (eventError) {
+                            console.warn('⚠️ 触发input事件失败:', eventError);
+                        }
+                    } else {
+                        console.warn('⚠️ 未找到小说标题输入框');
                     }
                     
                     // 更新预览
                     this.updateNovelPreview();
+                    console.log('✅ 小说预览已更新');
+                } else {
+                    console.log(`✅ 小说标题有效: "${novelTitle}"`);
                 }
                 
                 const novelGenre = this.configData.novel && this.configData.novel.genre;
                 if (!novelGenre) {
+                    console.log('⚠️ 小说类型为空，设置为默认值"都市"');
+                    
                     // 默认类型已经是'都市'，但再次确认
                     if (this.configData.novel) {
                         this.configData.novel.genre = '都市';
+                        console.log('✅ 配置数据中的类型已更新');
                     }
                     
                     // 更新选择框显示
                     const genreSelect = document.getElementById('novel-genre');
                     if (genreSelect) {
                         genreSelect.value = '都市';
+                        console.log('✅ 选择框值已更新');
+                        
+                        // 手动触发change事件
+                        try {
+                            genreSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('✅ change事件已触发');
+                        } catch (eventError) {
+                            console.warn('⚠️ 触发change事件失败:', eventError);
+                        }
+                    } else {
+                        console.warn('⚠️ 未找到小说类型选择框');
                     }
                     
                     // 更新预览
                     this.updateNovelPreview();
+                } else {
+                    console.log(`✅ 小说类型有效: "${novelGenre}"`);
                 }
+                
+                console.log('✅ 步骤1验证通过');
                 return true;
                 
             case 2:
@@ -878,22 +938,57 @@ class ConfigUX {
         // 进入创作控制台
         const enterConsoleBtn = document.querySelector('a[href="/writing"]');
         if (enterConsoleBtn) {
-            enterConsoleBtn.addEventListener('click', (e) => {
+            enterConsoleBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
-                this.enterWritingConsole();
+                try {
+                    await this.enterWritingConsole();
+                } catch (error) {
+                    console.error('❌ 进入创作控制台失败:', error);
+                    try {
+                        this.showError('进入创作页面失败: ' + (error.message || '未知错误'));
+                    } catch (alertError) {
+                        console.warn('Alert被浏览器阻止:', alertError);
+                    }
+                }
             });
         }
     }
     
     async startCreation() {
+        console.log('🚀 开始创建小说项目...');
+        
+        // 验证所有配置
+        console.log('🔍 验证所有配置...');
         if (!this.validateCurrentStep()) {
+            console.error('❌ 配置验证失败，无法开始创作');
+            try {
+                this.showError('配置验证失败，请检查所有输入');
+            } catch (alertError) {
+                console.warn('Alert被浏览器阻止:', alertError);
+            }
             return;
         }
+        console.log('✅ 所有配置验证通过');
         
         try {
             this.showSuccess('开始创建小说项目...');
             
-            // 准备请求数据
+            // 保存配置到本地存储
+            console.log('💾 保存配置...');
+            await this.saveConfig();
+            
+            // 验证配置是否已保存
+            console.log('🔍 验证配置保存状态...');
+            const savedConfig = localStorage.getItem('geniuswriter_config');
+            if (!savedConfig) {
+                console.error('❌ 配置保存失败，localStorage中未找到配置');
+                this.showError('配置保存失败，无法开始创作');
+                return;
+            }
+            
+            console.log('✅ 配置保存验证通过');
+            
+            // 准备请求数据（用于模拟API调用）
             const requestData = {
                 novel: this.configData.novel,
                 model: {
@@ -909,34 +1004,75 @@ class ConfigUX {
                 workflows: this.configData.workflows
             };
             
+            console.log('📡 模拟API调用...');
             // 这里应该是实际的API调用
             // 模拟成功响应
             await new Promise(resolve => setTimeout(resolve, 1500));
             
+            console.log('✅ 小说项目创建成功！');
             this.showSuccess('小说项目创建成功！正在跳转到创作页面...');
             
             // 跳转到创作页面
             setTimeout(() => {
+                console.log('📍 跳转到创作页面');
                 window.location.href = '/writing';
             }, 1000);
             
         } catch (error) {
-            console.error('创建小说失败:', error);
+            console.error('❌ 创建小说失败:', error);
             this.showError('创建小说失败: ' + (error.message || '未知错误'));
         }
     }
     
     async saveConfig() {
         try {
-            // 保存配置到本地存储
-            this.configData.savedAt = new Date().toISOString();
-            localStorage.setItem('geniuswriter_config', JSON.stringify(this.configData));
+            console.log('💾 正在保存配置到本地存储...');
             
-            this.showSuccess('配置已保存到本地存储');
+            // 确保配置数据完整
+            const configToSave = {
+                novel: this.configData.novel || {},
+                model: this.configData.model || {},
+                parameters: this.configData.parameters || {},
+                workflows: this.configData.workflows || {},
+                step: this.configData.step || 1,
+                savedAt: new Date().toISOString()
+            };
+            
+            console.log('📋 保存的配置:', {
+                title: configToSave.novel.title,
+                genre: configToSave.novel.genre,
+                model: configToSave.model.selected,
+                chapters: configToSave.novel.chapters
+            });
+            
+            // 保存到本地存储
+            localStorage.setItem('geniuswriter_config', JSON.stringify(configToSave));
+            
+            // 验证保存是否成功
+            const saved = localStorage.getItem('geniuswriter_config');
+            if (saved) {
+                console.log('✅ 配置已成功保存到本地存储');
+                console.log('📏 保存的数据大小:', saved.length, '字符');
+                
+                // 更新configData中的savedAt
+                this.configData.savedAt = configToSave.savedAt;
+                
+                this.showSuccess('配置已保存到本地存储');
+            } else {
+                console.error('❌ 配置保存失败，localStorage返回空');
+                this.showError('配置保存失败，请检查浏览器设置或存储空间');
+            }
             
         } catch (error) {
-            console.error('保存配置失败:', error);
-            this.showError('保存配置失败: ' + error.message);
+            console.error('❌ 保存配置失败:', error);
+            // 尝试提供更详细的错误信息
+            let errorMessage = '保存配置失败: ' + error.message;
+            if (error.name === 'QuotaExceededError') {
+                errorMessage = '本地存储空间不足，请清除浏览器数据或使用其他浏览器';
+            } else if (error.name === 'SecurityError') {
+                errorMessage = '浏览器安全设置阻止了本地存储访问';
+            }
+            this.showError(errorMessage);
         }
     }
     
@@ -944,36 +1080,108 @@ class ConfigUX {
         try {
             const saved = localStorage.getItem('geniuswriter_config');
             if (saved) {
+                console.log('📝 找到本地保存的配置，正在解析...');
                 const parsed = JSON.parse(saved);
                 
-                // 合并配置，保留默认值
-                this.configData = {
-                    ...this.configData,
-                    ...parsed,
-                    novel: { ...this.configData.novel, ...parsed.novel },
-                    model: { ...this.configData.model, ...parsed.model },
-                    parameters: { ...this.configData.parameters, ...parsed.parameters },
-                    workflows: { ...this.configData.workflows, ...parsed.workflows }
+                // 确保配置数据结构完整
+                const safeParsed = {
+                    novel: parsed.novel || {},
+                    model: parsed.model || {},
+                    parameters: parsed.parameters || {},
+                    workflows: parsed.workflows || {},
+                    step: parsed.step || 1,
+                    savedAt: parsed.savedAt
                 };
                 
-                console.log('已加载保存的配置');
+                // 合并配置，保留默认值，使用安全合并避免undefined展开错误
+                this.configData = {
+                    ...this.configData,
+                    step: safeParsed.step || this.configData.step,
+                    savedAt: safeParsed.savedAt || this.configData.savedAt,
+                    novel: { 
+                        ...this.configData.novel, 
+                        ...(safeParsed.novel || {}) 
+                    },
+                    model: { 
+                        ...this.configData.model, 
+                        ...(safeParsed.model || {}) 
+                    },
+                    parameters: { 
+                        ...this.configData.parameters, 
+                        ...(safeParsed.parameters || {}) 
+                    },
+                    workflows: { 
+                        ...this.configData.workflows, 
+                        ...(safeParsed.workflows || {}) 
+                    }
+                };
+                
+                console.log('✅ 已加载保存的配置');
+                console.log('📊 加载的配置:', {
+                    step: this.configData.step,
+                    title: this.configData.novel.title,
+                    model: this.configData.model.selected,
+                    chapters: this.configData.novel.chapters
+                });
+            } else {
+                console.log('📝 未找到本地保存的配置，使用默认值');
             }
         } catch (error) {
-            console.warn('加载保存的配置失败:', error);
+            console.error('❌ 加载保存的配置失败:', error);
+            // 发生错误时，使用默认配置
+            console.log('⚠️ 使用默认配置继续');
         }
     }
     
-    enterWritingConsole() {
+    async enterWritingConsole() {
+        console.log('🚪 进入创作控制台...');
+        
         // 验证所有配置
+        console.log('🔍 验证所有配置...');
         if (!this.validateCurrentStep()) {
+            console.error('❌ 配置验证失败，无法进入创作页面');
+            try {
+                this.showError('配置验证失败，请检查所有输入');
+            } catch (alertError) {
+                console.warn('Alert被浏览器阻止:', alertError);
+            }
+            return;
+        }
+        console.log('✅ 所有配置验证通过');
+        
+        // 保存配置
+        console.log('💾 保存配置...');
+        await this.saveConfig();
+        
+        // 验证配置是否已保存
+        console.log('🔍 验证配置保存状态...');
+        const savedConfig = localStorage.getItem('geniuswriter_config');
+        if (!savedConfig) {
+            console.error('❌ 配置保存失败，localStorage中未找到配置');
+            try {
+                this.showError('配置保存失败，无法进入创作页面');
+            } catch (alertError) {
+                console.warn('Alert被浏览器阻止:', alertError);
+            }
             return;
         }
         
-        // 保存配置
-        this.saveConfig();
+        console.log('✅ 配置保存验证通过');
+        console.log('📏 保存的配置大小:', savedConfig.length, '字符');
         
-        // 跳转到创作页面
-        window.location.href = '/writing';
+        // 显示跳转提示
+        console.log('🔀 正在跳转到创作页面...');
+        try {
+            this.showSuccess('配置已保存，正在跳转到创作页面...');
+        } catch (alertError) {
+            console.log('⚠️ 跳转提示被阻止，继续跳转');
+        }
+        
+        // 短暂延迟后跳转到创作页面
+        setTimeout(() => {
+            console.log('📍 跳转到创作页面');
+            window.location.href = '/writing';
+        }, 1000);
     }
     
     // ==================== 工具方法 ====================
