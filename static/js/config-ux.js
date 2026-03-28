@@ -84,33 +84,53 @@ class ConfigUX {
         // 下一步按钮
         const nextStep1Btn = document.getElementById('next-step-1');
         console.log(`下一步按钮1: ${nextStep1Btn ? '找到' : '未找到'}`);
-        nextStep1Btn?.addEventListener('click', () => {
-            console.log('👉 点击下一步按钮1 (前往步骤2)');
-            this.goToStep(2);
-        });
+        if (nextStep1Btn) {
+            nextStep1Btn.addEventListener('click', () => {
+                console.log('👉 点击下一步按钮1 (前往步骤2)');
+                this.goToStep(2);
+            });
+        }
         
-        document.getElementById('next-step-2')?.addEventListener('click', () => {
-            console.log('👉 点击下一步按钮2 (前往步骤3)');
-            this.goToStep(3);
-        });
-        document.getElementById('next-step-3')?.addEventListener('click', () => {
-            console.log('👉 点击下一步按钮3 (前往步骤4)');
-            this.goToStep(4);
-        });
+        const nextStep2Btn = document.getElementById('next-step-2');
+        if (nextStep2Btn) {
+            nextStep2Btn.addEventListener('click', () => {
+                console.log('👉 点击下一步按钮2 (前往步骤3)');
+                this.goToStep(3);
+            });
+        }
+        
+        const nextStep3Btn = document.getElementById('next-step-3');
+        if (nextStep3Btn) {
+            nextStep3Btn.addEventListener('click', () => {
+                console.log('👉 点击下一步按钮3 (前往步骤4)');
+                this.goToStep(4);
+            });
+        }
         
         // 上一步按钮
-        document.getElementById('prev-step-2')?.addEventListener('click', () => {
-            console.log('👈 点击上一步按钮2 (返回步骤1)');
-            this.goToStep(1);
-        });
-        document.getElementById('prev-step-3')?.addEventListener('click', () => {
-            console.log('👈 点击上一步按钮3 (返回步骤2)');
-            this.goToStep(2);
-        });
-        document.getElementById('prev-step-4')?.addEventListener('click', () => {
-            console.log('👈 点击上一步按钮4 (返回步骤3)');
-            this.goToStep(3);
-        });
+        const prevStep2Btn = document.getElementById('prev-step-2');
+        if (prevStep2Btn) {
+            prevStep2Btn.addEventListener('click', () => {
+                console.log('👈 点击上一步按钮2 (返回步骤1)');
+                this.goToStep(1);
+            });
+        }
+        
+        const prevStep3Btn = document.getElementById('prev-step-3');
+        if (prevStep3Btn) {
+            prevStep3Btn.addEventListener('click', () => {
+                console.log('👈 点击上一步按钮3 (返回步骤2)');
+                this.goToStep(2);
+            });
+        }
+        
+        const prevStep4Btn = document.getElementById('prev-step-4');
+        if (prevStep4Btn) {
+            prevStep4Btn.addEventListener('click', () => {
+                console.log('👈 点击上一步按钮4 (返回步骤3)');
+                this.goToStep(3);
+            });
+        }
         
         console.log('✅ 步骤导航初始化完成');
     }
@@ -149,7 +169,10 @@ class ConfigUX {
         document.querySelectorAll('.step-content').forEach(content => {
             content.classList.remove('active');
         });
-        document.getElementById(`step${stepNumber}-content`)?.classList.add('active');
+        const stepContent = document.getElementById(`step${stepNumber}-content`);
+        if (stepContent) {
+            stepContent.classList.add('active');
+        }
         
         // 更新进度显示
         this.updateProgressDisplay();
@@ -166,10 +189,14 @@ class ConfigUX {
         switch (currentStep) {
             case 1:
                 // 验证小说设置
-                if (!this.configData.novel.title?.trim()) {
+                const novelTitle = this.configData.novel && this.configData.novel.title;
+                if (!novelTitle || !novelTitle.trim()) {
                     // 自动填充默认标题
-                    const defaultTitle = `我的${this.configData.novel.genre || '都市'}小说`;
-                    this.configData.novel.title = defaultTitle;
+                    const novelGenre = (this.configData.novel && this.configData.novel.genre) || '都市';
+                    const defaultTitle = `我的${novelGenre}小说`;
+                    if (this.configData.novel) {
+                        this.configData.novel.title = defaultTitle;
+                    }
                     
                     // 更新输入框显示
                     const titleInput = document.getElementById('novel-title');
@@ -181,9 +208,12 @@ class ConfigUX {
                     this.updateNovelPreview();
                 }
                 
-                if (!this.configData.novel.genre) {
+                const novelGenre = this.configData.novel && this.configData.novel.genre;
+                if (!novelGenre) {
                     // 默认类型已经是'都市'，但再次确认
-                    this.configData.novel.genre = '都市';
+                    if (this.configData.novel) {
+                        this.configData.novel.genre = '都市';
+                    }
                     
                     // 更新选择框显示
                     const genreSelect = document.getElementById('novel-genre');
@@ -206,8 +236,9 @@ class ConfigUX {
                 // 如果是真实模型，验证API密钥
                 const selectedModel = this.configData.model.selected;
                 if (selectedModel !== 'simulated') {
-                    const apiKey = this.configData.model[selectedModel]?.apiKey;
-                    if (!apiKey?.trim() || !apiKey.startsWith('sk-')) {
+                    const modelConfig = this.configData.model && this.configData.model[selectedModel];
+                    const apiKey = modelConfig && modelConfig.apiKey;
+                    if (!apiKey || !apiKey.trim() || !apiKey.startsWith('sk-')) {
                         this.showError(`请输入有效的${selectedModel === 'openai' ? 'OpenAI' : 'DeepSeek'} API密钥`);
                         return false;
                     }
@@ -248,9 +279,14 @@ class ConfigUX {
         const progressPercent = (this.configData.step / 4) * 100;
         const stepNames = ['小说设置', '选择模型', '参数调整', '开始创作'];
         
-        document.getElementById('progress-percent')?.textContent = `${Math.round(progressPercent)}%`;
-        document.getElementById('current-step-text')?.textContent = stepNames[this.configData.step - 1];
-        document.getElementById('current-step-status')?.textContent = `步骤${this.configData.step}/4：${stepNames[this.configData.step - 1]}`;
+        const progressPercentEl = document.getElementById('progress-percent');
+        if (progressPercentEl) progressPercentEl.textContent = `${Math.round(progressPercent)}%`;
+        
+        const currentStepTextEl = document.getElementById('current-step-text');
+        if (currentStepTextEl) currentStepTextEl.textContent = stepNames[this.configData.step - 1];
+        
+        const currentStepStatusEl = document.getElementById('current-step-status');
+        if (currentStepStatusEl) currentStepStatusEl.textContent = `步骤${this.configData.step}/4：${stepNames[this.configData.step - 1]}`;
     }
     
     // ==================== 模型卡片选择 ====================
@@ -329,7 +365,8 @@ class ConfigUX {
             'simulated': '免费'
         };
         
-        const status = this.configData.model[model]?.validated ? '已验证' : '未验证';
+        const modelConfig = this.configData.model && this.configData.model[model];
+        const status = modelConfig && modelConfig.validated ? '已验证' : '未验证';
         
         selectedModelEl.textContent = modelNames[model];
         connectionStatusEl.textContent = status;
@@ -341,47 +378,68 @@ class ConfigUX {
     
     initFormEvents() {
         // 小说标题
-        document.getElementById('novel-title')?.addEventListener('input', (e) => {
-            this.configData.novel.title = e.target.value;
-            this.updateNovelPreview();
-        });
+        const novelTitleInput = document.getElementById('novel-title');
+        if (novelTitleInput) {
+            novelTitleInput.addEventListener('input', (e) => {
+                this.configData.novel.title = e.target.value;
+                this.updateNovelPreview();
+            });
+        }
         
         // 小说类型
-        document.getElementById('novel-genre')?.addEventListener('change', (e) => {
-            this.configData.novel.genre = e.target.value;
-            this.updateNovelPreview();
-        });
+        const novelGenreSelect = document.getElementById('novel-genre');
+        if (novelGenreSelect) {
+            novelGenreSelect.addEventListener('change', (e) => {
+                this.configData.novel.genre = e.target.value;
+                this.updateNovelPreview();
+            });
+        }
         
         // 章节数量
-        document.getElementById('chapters-count')?.addEventListener('input', (e) => {
-            this.configData.novel.chapters = parseInt(e.target.value) || 10;
-            this.updateNovelPreview();
-            this.updateTotalWords();
-        });
+        const chaptersCountInput = document.getElementById('chapters-count');
+        if (chaptersCountInput) {
+            chaptersCountInput.addEventListener('input', (e) => {
+                this.configData.novel.chapters = parseInt(e.target.value) || 10;
+                this.updateNovelPreview();
+                this.updateTotalWords();
+            });
+        }
         
         // 每章字数
-        document.getElementById('words-per-chapter')?.addEventListener('input', (e) => {
-            this.configData.novel.wordsPerChapter = parseInt(e.target.value) || 3000;
-            this.updateNovelPreview();
-            this.updateTotalWords();
-        });
+        const wordsPerChapterInput = document.getElementById('words-per-chapter');
+        if (wordsPerChapterInput) {
+            wordsPerChapterInput.addEventListener('input', (e) => {
+                this.configData.novel.wordsPerChapter = parseInt(e.target.value) || 3000;
+                this.updateNovelPreview();
+                this.updateTotalWords();
+            });
+        }
         
         // 写作风格
-        document.getElementById('writing-style')?.addEventListener('change', (e) => {
-            this.configData.novel.writingStyle = e.target.value;
-            this.updateNovelPreview();
-        });
+        const writingStyleSelect = document.getElementById('writing-style');
+        if (writingStyleSelect) {
+            writingStyleSelect.addEventListener('change', (e) => {
+                this.configData.novel.writingStyle = e.target.value;
+                this.updateNovelPreview();
+            });
+        }
         
         // 目标读者
-        document.getElementById('target-audience')?.addEventListener('change', (e) => {
-            this.configData.novel.targetAudience = e.target.value;
-            this.updateNovelPreview();
-        });
+        const targetAudienceSelect = document.getElementById('target-audience');
+        if (targetAudienceSelect) {
+            targetAudienceSelect.addEventListener('change', (e) => {
+                this.configData.novel.targetAudience = e.target.value;
+                this.updateNovelPreview();
+            });
+        }
         
         // 特别要求
-        document.getElementById('additional-info')?.addEventListener('input', (e) => {
-            this.configData.novel.additionalInfo = e.target.value;
-        });
+        const additionalInfoTextarea = document.getElementById('additional-info');
+        if (additionalInfoTextarea) {
+            additionalInfoTextarea.addEventListener('input', (e) => {
+                this.configData.novel.additionalInfo = e.target.value;
+            });
+        }
         
         // 初始化总字数计算
         this.updateTotalWords();
@@ -400,12 +458,23 @@ class ConfigUX {
     
     updateNovelPreview() {
         // 更新摘要显示
-        document.getElementById('summary-title')?.textContent = this.configData.novel.title || '未设置';
-        document.getElementById('summary-genre')?.textContent = this.configData.novel.genre || '都市';
-        document.getElementById('summary-chapters')?.textContent = (this.configData.novel.chapters || 10) + '章';
-        document.getElementById('summary-words')?.textContent = this.formatNumber((this.configData.novel.chapters || 10) * (this.configData.novel.wordsPerChapter || 3000)) + '字';
-        document.getElementById('summary-style')?.textContent = this.configData.novel.writingStyle || '通俗性';
-        document.getElementById('summary-audience')?.textContent = this.getAudienceText(this.configData.novel.targetAudience);
+        const summaryTitleEl = document.getElementById('summary-title');
+        if (summaryTitleEl) summaryTitleEl.textContent = this.configData.novel.title || '未设置';
+        
+        const summaryGenreEl = document.getElementById('summary-genre');
+        if (summaryGenreEl) summaryGenreEl.textContent = this.configData.novel.genre || '都市';
+        
+        const summaryChaptersEl = document.getElementById('summary-chapters');
+        if (summaryChaptersEl) summaryChaptersEl.textContent = (this.configData.novel.chapters || 10) + '章';
+        
+        const summaryWordsEl = document.getElementById('summary-words');
+        if (summaryWordsEl) summaryWordsEl.textContent = this.formatNumber((this.configData.novel.chapters || 10) * (this.configData.novel.wordsPerChapter || 3000)) + '字';
+        
+        const summaryStyleEl = document.getElementById('summary-style');
+        if (summaryStyleEl) summaryStyleEl.textContent = this.configData.novel.writingStyle || '通俗性';
+        
+        const summaryAudienceEl = document.getElementById('summary-audience');
+        if (summaryAudienceEl) summaryAudienceEl.textContent = this.getAudienceText(this.configData.novel.targetAudience);
     }
     
     getAudienceText(audience) {
@@ -604,10 +673,17 @@ class ConfigUX {
         const expertiseText = tier3 <= 0.7 ? '基础' : tier3 <= 0.9 ? '中等' : '高度';
         const qualityText = this.configData.workflows.qualityCheck ? '严格' : '宽松';
         
-        document.getElementById('preview-creativity')?.textContent = creativityText;
-        document.getElementById('preview-depth')?.textContent = depthText;
-        document.getElementById('preview-expertise')?.textContent = expertiseText;
-        document.getElementById('preview-quality')?.textContent = qualityText;
+        const previewCreativityEl = document.getElementById('preview-creativity');
+        if (previewCreativityEl) previewCreativityEl.textContent = creativityText;
+        
+        const previewDepthEl = document.getElementById('preview-depth');
+        if (previewDepthEl) previewDepthEl.textContent = depthText;
+        
+        const previewExpertiseEl = document.getElementById('preview-expertise');
+        if (previewExpertiseEl) previewExpertiseEl.textContent = expertiseText;
+        
+        const previewQualityEl = document.getElementById('preview-quality');
+        if (previewQualityEl) previewQualityEl.textContent = qualityText;
     }
     
     updateModelPreview() {
@@ -616,9 +692,14 @@ class ConfigUX {
     
     updateFinalSummary() {
         // 更新最终摘要
-        document.getElementById('final-title-count')?.textContent = this.configData.novel.title ? '1' : '0';
-        document.getElementById('final-chapter-count')?.textContent = this.configData.novel.chapters || 10;
-        document.getElementById('final-word-count')?.textContent = this.formatNumber(
+        const finalTitleCountEl = document.getElementById('final-title-count');
+        if (finalTitleCountEl) finalTitleCountEl.textContent = this.configData.novel.title ? '1' : '0';
+        
+        const finalChapterCountEl = document.getElementById('final-chapter-count');
+        if (finalChapterCountEl) finalChapterCountEl.textContent = this.configData.novel.chapters || 10;
+        
+        const finalWordCountEl = document.getElementById('final-word-count');
+        if (finalWordCountEl) finalWordCountEl.textContent = this.formatNumber(
             (this.configData.novel.chapters || 10) * (this.configData.novel.wordsPerChapter || 3000)
         );
         
@@ -627,7 +708,8 @@ class ConfigUX {
             'deepseek': 'DeepSeek',
             'simulated': '模拟模式'
         };
-        document.getElementById('final-model')?.textContent = modelNames[this.configData.model.selected] || '未选择';
+        const finalModelEl = document.getElementById('final-model');
+        if (finalModelEl) finalModelEl.textContent = modelNames[this.configData.model.selected] || '未选择';
     }
     
     // ==================== API事件 ====================
@@ -718,7 +800,8 @@ class ConfigUX {
     }
     
     async testApiConnection(provider) {
-        const apiKey = this.configData.model[provider]?.apiKey;
+        const modelConfig = this.configData.model && this.configData.model[provider];
+        const apiKey = modelConfig && modelConfig.apiKey;
         const resultEl = document.getElementById(`${provider}-test-result`);
         
         if (!apiKey || !apiKey.startsWith('sk-')) {
@@ -737,7 +820,9 @@ class ConfigUX {
             // 模拟测试结果
             const success = Math.random() > 0.3; // 70%成功率
             if (success) {
-                this.configData.model[provider].validated = true;
+                if (this.configData.model && this.configData.model[provider]) {
+                    this.configData.model[provider].validated = true;
+                }
                 this.showTestResult(provider, 'success', '连接测试成功！API密钥有效');
                 this.updateModelStatusDisplay(this.configData.model.selected);
             } else {
