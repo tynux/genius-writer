@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史记录 - GeniusWriter</title>
+    <link rel="stylesheet" href="/static/css/style-clean.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/static/js/history.js" defer></script>
+    <style>
+        /* 历史记录页面样式 */
+        .history-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            margin-bottom: 2rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-description {
+            color: var(--color-gray-600);
+            font-size: 1.125rem;
+        }
+        
+        /* 过滤器 */
+        .filters-container {
+            background: var(--color-white);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--color-gray-200);
+        }
+        
+        .filters-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background: var(--color-gray-100);
+            color: var(--color-gray-700);
+            border: 1px solid var(--color-gray-200);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+        
+        .filter-tab:hover {
+            background: var(--color-gray-200);
+        }
+        
+        .filter-tab.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+        
+        .filter-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .filter-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-gray-700);
+        }
+        
+        .filter-select {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--color-gray-300);
+            background: white;
+            font-size: 0.875rem;
+            color: var(--color-gray-900);
+            transition: border-color 0.2s ease;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* 项目网格 */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .project-card {
+            background: var(--color-white);
+            border-radius: 1rem;
+            border: 1px solid var(--color-gray-200);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border-color: var(--color-primary-light);
+        }
+        
+        .project-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+            color: white;
+            position: relative;
+        }
+        
+        .project-status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-planning { background: rgba(255, 255, 255, 0.2); color: white; }
+        .status-writing { background: rgba(34, 197, 94, 0.2); color: rgb(21, 128, 61); }
+        .status-reviewing { background: rgba(245, 158, 11, 0.2); color: rgb(180, 83, 9); }
+        .status-completed { background: rgba(34, 197, 94, 0.2); color: rgb(21, 128, 61); }
+        .status-paused { background: rgba(239, 68, 68, 0.2); color: rgb(185, 28, 28); }
+        
+        .project-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+            max-width: 80%;
+        }
+        
+        .project-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+        
+        .project-body {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .project-description {
+            color: var(--color-gray-600);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+            flex: 1;
+        }
+        
+        .project-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--color-gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .stat-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+        }
+        
+        .progress-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-label {
+            font-size: 0.875rem;
+            color: var(--color-gray-700);
+        }
+        
+        .progress-percent {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: var(--color-gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary-light), var(--color-primary));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .project-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            border: 1px solid transparent;
+        }
+        
+        .action-btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+        
+        .action-btn-primary:hover {
+            background: var(--color-primary-dark);
+        }
+        
+        .action-btn-secondary {
+            background: var(--color-gray-100);
+            color: var(--color-gray-700);
+            border-color: var(--color-gray-300);
+        }
+        
+        .action-btn-secondary:hover {
+            background: var(--color-gray-200);
+        }
+        
+        .action-btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: rgb(185, 28, 28);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        
+        .action-btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--color-white);
+            border-radius: 1rem;
+            border: 2px dashed var(--color-gray-300);
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--color-gray-400);
+            margin-bottom: 1.5rem;
+        }
+        
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--color-gray-800);
+            margin-bottom: 1rem;
+        }
+        
+        .empty-description {
+            color: var(--color-gray-600);
+            max-width: 400px;
+            margin: 0 auto 2rem;
+        }
+        
+        /* 加载状态 */
+        .loading-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--color-gray-200);
+            border-radius: 50%;
+            border-top-color: var(--color-primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: var(--color-gray-600);
+        }
+        
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+        
+        .page-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--color-gray-300);
+            background: white;
+            color: var(--color-gray-700);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .page-btn:hover:not(:disabled) {
+            background: var(--color-gray-100);
+        }
+        
+        .page-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+        
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .page-info {
+            font-size: 0.875rem;
+            color: var(--color-gray-600);
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .history-container {
+                padding: 1rem;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .project-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .project-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">
+                <a href="/" class="logo">
+                    <i class="fas fa-feather-alt"></i>
+                    GeniusWriter
+                </a>
+            </div>
+            
+            <div class="navbar-menu">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    首页
+                </a>
+                <a href="/config" class="nav-link">
+                    <i class="fas fa-cog"></i>
+                    配置
+                </a>
+                <a href="/writing" class="nav-link">
+                    <i class="fas fa-pen"></i>
+                    创作
+                </a>
+                <a href="/history" class="nav-link active">
+                    <i class="fas fa-history"></i>
+                    历史记录
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 历史记录内容 -->
+    <main class="history-container">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-history mr-2"></i>
+                历史记录
+            </h1>
+            <p class="page-description">
+                查看和管理您所有的小说创作项目。继续创作、下载作品或查看进度。
+            </p>
+        </div>
+        
+        <!-- 过滤器 -->
+        <div class="filters-container">
+            <div class="filters-header">
+                <i class="fas fa-filter"></i>
+                筛选项目
+            </div>
+            
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">全部项目</button>
+                <button class="filter-tab" data-filter="writing">创作中</button>
+                <button class="filter-tab" data-filter="completed">已完成</button>
+                <button class="filter-tab" data-filter="planning">规划中</button>
+                <button class="filter-tab" data-filter="paused">已暂停</button>
+            </div>
+            
+            <div class="filter-options">
+                <div class="filter-group">
+                    <label class="filter-label">排序方式</label>
+                    <select class="filter-select" id="sort-by">
+                        <option value="updated_at">最近更新</option>
+                        <option value="created_at">创建时间</option>
+                        <option value="title">标题</option>
+                        <option value="progress">进度</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">类型</label>
+                    <select class="filter-select" id="genre-filter">
+                        <option value="all">所有类型</option>
+                        <option value="都市">都市小说</option>
+                        <option value="玄幻">玄幻小说</option>
+                        <option value="科幻">科幻小说</option>
+                        <option value="历史">历史小说</option>
+                        <option value="言情">言情小说</option>
+                        <option value="悬疑">悬疑小说</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">每页显示</label>
+                    <select class="filter-select" id="page-size">
+                        <option value="12">12个项目</option>
+                        <option value="24">24个项目</option>
+                        <option value="48">48个项目</option>
+                        <option value="100">全部项目</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 项目网格 -->
+        <div class="projects-grid" id="projects-grid">
+            <!-- 项目卡片将在这里动态加载 -->
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">正在加载项目...</div>
+            </div>
+        </div>
+        
+        <!-- 分页 -->
+        <div class="pagination" id="pagination" style="display: none;">
+            <button class="page-btn" id="prev-page" disabled>
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="page-info" id="page-info">第 1 页，共 1 页</div>
+            
+            <button class="page-btn" id="next-page" disabled>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4 class="footer-title">
+                        <i class="fas fa-feather-alt"></i>
+                        GeniusWriter
+                    </h4>
+                    <p class="text-sm">
+                        基于Claude Game Studios架构的AI小说创作平台
+                    </p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-title">快速链接</h4>
+                    <a href="/config" class="footer-link">配置小说</a>
+                    <a href="/writing" class="footer-link">创作控制台</a>
+                    <a href="/history" class="footer-link">历史记录</a>
+                    <a href="#" class="footer-link">使用指南</a>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-title">系统状态</h4>
+                    <div class="space-y-2">
+                        <div class="flex items-center text-sm">
+                            <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                            <span>API服务: 正常</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                            <span>模型连接: 正常</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                            <span>数据库: 正常</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="text-xs">
+                    © 2026 GeniusWriter. 基于Claude Game Studios架构开发。
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

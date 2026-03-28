@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目详情 - GeniusWriter</title>
+    <link rel="stylesheet" href="/static/css/style-clean.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/static/js/project.js" defer></script>
+    <style>
+        /* 项目详情页面样式 */
+        .project-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .project-header {
+            background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+            border-radius: 1rem;
+            padding: 2rem;
+            color: white;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .header-actions {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .header-action-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .header-action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .project-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            max-width: 80%;
+        }
+        
+        .project-subtitle {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+            max-width: 80%;
+        }
+        
+        .project-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .meta-label {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .meta-value {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .progress-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 0.75rem;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+        
+        .progress-percent {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        
+        /* 章节导航 */
+        .chapters-nav {
+            background: var(--color-white);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--color-gray-200);
+        }
+        
+        .nav-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chapters-list {
+            display: grid;
+            gap: 0.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        
+        .chapter-nav-item {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--color-gray-200);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chapter-nav-item:hover {
+            background: var(--color-gray-50);
+            border-color: var(--color-gray-300);
+        }
+        
+        .chapter-nav-item.active {
+            background: var(--color-primary-light);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+        
+        .chapter-nav-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .chapter-nav-title {
+            font-weight: 500;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .chapter-nav-number {
+            font-size: 0.75rem;
+            color: var(--color-gray-500);
+            margin-top: 0.125rem;
+        }
+        
+        .chapter-nav-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+        }
+        
+        .status-planned { background: var(--color-gray-400); }
+        .status-writing { background: var(--color-warning); }
+        .status-completed { background: var(--color-success); }
+        .status-reviewed { background: var(--color-primary); }
+        
+        /* 章节内容 */
+        .chapter-content-container {
+            background: var(--color-white);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 1px solid var(--color-gray-200);
+            margin-bottom: 2rem;
+            min-height: 500px;
+        }
+        
+        .chapter-header {
+            border-bottom: 2px solid var(--color-gray-200);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chapter-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .chapter-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--color-gray-600);
+        }
+        
+        .chapter-content {
+            line-height: 1.8;
+            font-size: 1.125rem;
+            color: var(--color-gray-800);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .empty-chapter {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--color-gray-500);
+        }
+        
+        .empty-chapter-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+        
+        .empty-chapter-text {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* 底部操作栏 */
+        .bottom-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            padding: 1.5rem;
+            background: var(--color-white);
+            border-radius: 1rem;
+            border: 1px solid var(--color-gray-200);
+        }
+        
+        .action-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .action-btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+        
+        .action-btn-primary:hover {
+            background: var(--color-primary-dark);
+        }
+        
+        .action-btn-secondary {
+            background: var(--color-gray-100);
+            color: var(--color-gray-700);
+            border: 1px solid var(--color-gray-300);
+        }
+        
+        .action-btn-secondary:hover {
+            background: var(--color-gray-200);
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .project-container {
+                padding: 1rem;
+            }
+            
+            .project-header {
+                padding: 1.5rem;
+            }
+            
+            .header-actions {
+                position: static;
+                margin-bottom: 1rem;
+                justify-content: flex-end;
+            }
+            
+            .project-title {
+                font-size: 1.5rem;
+                max-width: 100%;
+            }
+            
+            .project-meta-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chapter-content-container {
+                padding: 1.5rem;
+            }
+            
+            .bottom-actions {
+                flex-direction: column;
+            }
+        }
+        
+        /* 加载状态 */
+        .loading-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--color-gray-200);
+            border-radius: 50%;
+            border-top-color: var(--color-primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: var(--color-gray-600);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">
+                <a href="/" class="logo">
+                    <i class="fas fa-feather-alt"></i>
+                    GeniusWriter
+                </a>
+            </div>
+            
+            <div class="navbar-menu">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    首页
+                </a>
+                <a href="/config" class="nav-link">
+                    <i class="fas fa-cog"></i>
+                    配置
+                </a>
+                <a href="/writing" class="nav-link">
+                    <i class="fas fa-pen"></i>
+                    创作
+                </a>
+                <a href="/history" class="nav-link">
+                    <i class="fas fa-history"></i>
+                    历史记录
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 项目详情内容 -->
+    <main class="project-container">
+        <!-- 项目头部信息（动态加载） -->
+        <div class="project-header" id="project-header">
+            <div class="header-actions">
+                <button class="header-action-btn" id="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    返回
+                </button>
+                <button class="header-action-btn" id="edit-project-btn">
+                    <i class="fas fa-edit"></i>
+                    编辑
+                </button>
+            </div>
+            
+            <div class="loading-state" id="header-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">加载项目信息...</div>
+            </div>
+            
+            <div id="project-header-content" style="display: none;">
+                <h1 class="project-title" id="project-title"></h1>
+                <p class="project-subtitle" id="project-subtitle"></p>
+                
+                <div class="project-meta-grid">
+                    <div class="meta-item">
+                        <span class="meta-label">作者</span>
+                        <span class="meta-value" id="project-author"></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">类型</span>
+                        <span class="meta-value" id="project-genre"></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">章节总数</span>
+                        <span class="meta-value" id="project-chapters-total"></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">每章字数</span>
+                        <span class="meta-value" id="project-words-per-chapter"></span>
+                    </div>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <span class="progress-label">创作进度</span>
+                        <span class="progress-percent" id="project-progress-percent"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="project-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 章节导航 -->
+        <div class="chapters-nav">
+            <div class="nav-header">
+                <span>
+                    <i class="fas fa-list-ol"></i>
+                    章节列表
+                </span>
+                <span class="text-sm" id="chapters-count">0个章节</span>
+            </div>
+            
+            <div class="chapters-list" id="chapters-list">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">加载章节列表...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 章节内容 -->
+        <div class="chapter-content-container">
+            <div class="loading-state" id="chapter-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">选择章节查看内容...</div>
+            </div>
+            
+            <div id="chapter-content" style="display: none;">
+                <div class="chapter-header">
+                    <h2 class="chapter-title" id="chapter-title"></h2>
+                    <div class="chapter-meta" id="chapter-meta"></div>
+                </div>
+                <div class="chapter-content" id="chapter-text"></div>
+            </div>
+            
+            <div class="empty-chapter" id="empty-chapter" style="display: none;">
+                <div class="empty-chapter-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="empty-chapter-text">此章节暂无内容</div>
+                <p class="text-gray-600">选择其他章节或开始创作此章节</p>
+            </div>
+        </div>
+        
+        <!-- 底部操作栏 -->
+        <div class="bottom-actions">
+            <button class="action-btn action-btn-primary" id="continue-writing-btn">
+                <i class="fas fa-play"></i>
+                继续创作
+            </button>
+            <button class="action-btn action-btn-secondary" id="download-project-btn">
+                <i class="fas fa-download"></i>
+                下载项目
+            </button>
+            <button class="action-btn action-btn-secondary" id="export-json-btn">
+                <i class="fas fa-file-export"></i>
+                导出JSON
+            </button>
+        </div>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4 class="footer-title">
+                        <i class="fas fa-feather-alt"></i>
+                        GeniusWriter
+                    </h4>
+                    <p class="text-sm">
+                        基于Claude Game Studios架构的AI小说创作平台
+                    </p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-title">快速链接</h4>
+                    <a href="/config" class="footer-link">配置小说</a>
+                    <a href="/writing" class="footer-link">创作控制台</a>
+                    <a href="/history" class="footer-link">历史记录</a>
+                    <a href="#" class="footer-link">使用指南</a>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-title">系统状态</h4>
+                    <div class="space-y-2">
+                        <div class="flex items-center text-sm">
+                            <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                            <span>API服务: 正常</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                            <span>模型连接: 正常</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                            <span>数据库: 正常</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="text-xs">
+                    © 2026 GeniusWriter. 基于Claude Game Studios架构开发。
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

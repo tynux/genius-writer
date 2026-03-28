@@ -4,6 +4,7 @@ GeniusWriter - AI小说创作Web应用
 主Flask应用程序，提供Web界面和API接口
 """
 
+from sqlalchemy import text
 import os
 import json
 import logging
@@ -67,6 +68,42 @@ except ImportError as e:
         def generate(self, prompt, **kwargs):
             return {"text": f"模拟生成: {prompt[:50]}..."}
     
+    class NovelPlanningWorkflow:
+        def __init__(self, agent_system=None, model_clients=None):
+            self.agent_system = agent_system
+            self.model_clients = model_clients or {}
+        
+        def execute(self, workflow_data):
+            logger.warning("使用模拟的小说规划工作流")
+            return {
+                'success': True,
+                'outline': {
+                    'title': workflow_data.get('title', '模拟小说'),
+                    'genre': workflow_data.get('genre', '都市'),
+                    'chapters': [
+                        {'number': i+1, 'title': f'第{i+1}章', 'summary': '模拟章节概要'} 
+                        for i in range(workflow_data.get('chapters', 10))
+                    ]
+                }
+            }
+    
+    class ChapterWritingWorkflow:
+        def __init__(self, agent_system=None, model_clients=None):
+            self.agent_system = agent_system
+            self.model_clients = model_clients or {}
+        
+        def execute(self, workflow_data):
+            logger.warning("使用模拟的章节创作工作流")
+            return {
+                'success': True,
+                'chapter': {
+                    'number': workflow_data.get('chapter_number', 1),
+                    'title': f'第{workflow_data.get("chapter_number", 1)}章',
+                    'content': f"这是模拟生成的章节内容，基于第{workflow_data.get('chapter_number', 1)}章。\n\n本章大约{workflow_data.get('target_words', 3000)}字，包含基本的情节发展、人物对话和环境描写。\n\n（这是模拟内容，实际创作需要使用真实的工作流。）",
+                    'word_count': workflow_data.get('target_words', 3000)
+                }
+            }
+    
     logger.info("使用模拟模块启动应用")
 
 # 全局实例
@@ -119,12 +156,24 @@ def index():
 @app.route('/config')
 def config_page():
     """配置页面"""
-    return render_template('config.html')
+    # 使用新的用户体验优化模板
+    return render_template('config-ux.html')
 
 @app.route('/writing')
 def writing_page():
     """创作页面"""
-    return render_template('writing.html')
+    # 使用新的用户体验优化创作控制台
+    return render_template('writing-ux.html')
+
+@app.route('/history')
+def history_page():
+    """历史记录页面"""
+    return render_template('history.html')
+
+@app.route('/project/<novel_id>')
+def project_page(novel_id):
+    """项目详情页面"""
+    return render_template('project.html')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -134,7 +183,7 @@ def health_check():
     try:
         from database import db
         # 尝试执行简单查询
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
     except Exception as e:
         logger.error(f"数据库连接检查失败: {e}")
         db_status = 'unhealthy'
@@ -643,6 +692,75 @@ def get_novel_progress(novel_id):
         })
     except Exception as e:
         logger.error(f"获取小说进度失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/novels/<novel_id>/export', methods=['GET'])
+def export_novel(novel_id):
+    """导出小说"""
+    try:
+        format_type = request.args.get('format', 'txt')
+        
+        # 获取小说信息
+        novel = db_manager.get_novel(novel_id)
+        if not novel:
+            return jsonify({'success': False, 'error': '小说不存在'}), 404
+        
+        # 获取所有章节
+        chapters = db_manager.list_chapters(novel_id, limit=1000)
+        
+        if format_type == 'txt':
+            # 生成TXT格式
+            content = f"""《{novel['title']}》
+作者：{novel['author']}
+类型：{novel['genre']}
+状态：{novel['status']}
+进度：{novel['progress']}%
+总字数：{novel['total_words']}
+创建时间：{novel['created_at']}
+更新时间：{novel['updated_at']}
+
+简介：
+{novel['description'] or '暂无简介'}
+
+{'='*60}
+
+"""
+            
+            # 添加章节内容
+            for chapter in sorted(chapters, key=lambda x: x.get('chapter_number', 0)):
+                content += f"\n第{chapter.get('chapter_number', 0)}章：{chapter.get('title', '')}\n"
+                content += f"{'='*40}\n"
+                content += f"{chapter.get('content', '')}\n\n"
+            
+            # 返回文件
+            from io import BytesIO
+            from flask import make_response
+            
+            response = make_response(content)
+            response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+            response.headers['Content-Disposition'] = f'attachment; filename="{novel["title"]}.txt"'
+            return response
+            
+        elif format_type == 'json':
+            # 生成JSON格式
+            export_data = {
+                'novel': novel,
+                'chapters': chapters,
+                'exported_at': datetime.now().isoformat(),
+                'format': 'json'
+            }
+            
+            return jsonify({
+                'success': True,
+                'data': export_data,
+                'message': '导出成功（JSON格式）'
+            })
+        
+        else:
+            return jsonify({'success': False, 'error': f'不支持的格式: {format_type}'}), 400
+    
+    except Exception as e:
+        logger.error(f"导出小说失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/uploads/<filename>')
