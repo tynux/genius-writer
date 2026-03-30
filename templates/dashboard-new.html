@@ -1,0 +1,498 @@
+{% extends "base-new.html" %}
+
+{% block content %}
+<div class="page active" id="page-dashboard">
+    <div class="dashboard-grid">
+        <!-- 项目统计 -->
+        <div class="dashboard-card">
+            <div class="card-title">进行中的项目</div>
+            <div class="card-sub">当前正在创作的小说</div>
+            <div class="card-stats" id="active-projects">0</div>
+            <div class="card-action">
+                <a href="#" class="card-btn" onclick="showPage('new-novel')">查看全部</a>
+            </div>
+        </div>
+
+        <!-- 字数统计 -->
+        <div class="dashboard-card">
+            <div class="card-title">累计字数</div>
+            <div class="card-sub">所有项目的总创作字数</div>
+            <div class="card-stats" id="total-words">0</div>
+            <div class="card-action">
+                <a href="#" class="card-btn" onclick="showPage('writing')">继续创作</a>
+            </div>
+        </div>
+
+        <!-- 章节完成 -->
+        <div class="dashboard-card">
+            <div class="card-title">完成章节</div>
+            <div class="card-sub">已完成审阅的章节</div>
+            <div class="card-stats" id="completed-chapters">0</div>
+            <div class="card-action">
+                <a href="#" class="card-btn" onclick="showPage('writing')">查看进度</a>
+            </div>
+        </div>
+
+        <!-- AI使用情况 -->
+        <div class="dashboard-card">
+            <div class="card-title">AI调用次数</div>
+            <div class="card-sub">本月模型调用统计</div>
+            <div class="card-stats" id="ai-calls">0</div>
+            <div class="card-action">
+                <a href="#" class="card-btn" onclick="showPage('agents')">代理状态</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近项目 -->
+    <div class="dashboard-card mt-8">
+        <div class="card-title">最近项目</div>
+        <div class="card-sub">最近编辑或创建的小说项目</div>
+        
+        <div id="recent-projects" class="mt-8">
+            <div class="text-center" style="padding: 40px; color: var(--ink-soft);">
+                <div style="font-size: 48px; margin-bottom: 16px;">📚</div>
+                <div style="font-size: 16px; margin-bottom: 12px;">暂无最近项目</div>
+                <div style="font-size: 14px;">开始你的第一部小说创作吧！</div>
+                <button class="tb-btn tb-btn-primary mt-8" onclick="showPage('new-novel')" style="padding: 12px 32px;">
+                    开始创作第一部小说
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速指引 -->
+    <div class="dashboard-card mt-8">
+        <div class="card-title">快速开始</div>
+        <div class="card-sub">新手引导与常用功能</div>
+        
+        <div class="mt-8" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div style="padding: 20px; background: var(--paper-warm); border-radius: 10px; border: 1px solid var(--paper-border);">
+                <div style="font-size: 24px; margin-bottom: 12px;">🎯</div>
+                <div style="font-weight: 600; margin-bottom: 8px;">新建小说</div>
+                <div style="font-size: 14px; color: var(--ink-soft); margin-bottom: 16px;">
+                    从零开始创建一部新小说，选择类型、设置参数。
+                </div>
+                <button class="card-btn" onclick="showPage('new-novel')">开始创建</button>
+            </div>
+            
+            <div style="padding: 20px; background: var(--paper-warm); border-radius: 10px; border: 1px solid var(--paper-border);">
+                <div style="font-size: 24px; margin-bottom: 12px;">📝</div>
+                <div style="font-weight: 600; margin-bottom: 8px;">继续创作</div>
+                <div style="font-size: 14px; color: var(--ink-soft); margin-bottom: 16px;">
+                    继续编辑未完成的小说项目，查看创作进度。
+                </div>
+                <button class="card-btn" onclick="showPage('writing')" id="continue-btn" disabled>继续创作</button>
+            </div>
+            
+            <div style="padding: 20px; background: var(--paper-warm); border-radius: 10px; border: 1px solid var(--paper-border);">
+                <div style="font-size: 24px; margin-bottom: 12px;">🤖</div>
+                <div style="font-weight: 600; margin-bottom: 8px;">代理设置</div>
+                <div style="font-size: 14px; color: var(--ink-soft); margin-bottom: 16px;">
+                    配置AI代理参数，管理模型选择和创作风格。
+                </div>
+                <button class="card-btn" onclick="showPage('settings')">前往设置</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 其他页面占位 -->
+<div class="page" id="page-new-novel">
+    <!-- 新建小说页面内容将由JavaScript动态加载 -->
+</div>
+
+<div class="page" id="page-writing">
+    <!-- 创作页面内容将由JavaScript动态加载 -->
+</div>
+
+<div class="page" id="page-agents">
+    <!-- 代理中心页面内容将由JavaScript动态加载 -->
+</div>
+
+<div class="page" id="page-settings">
+    <!-- 设置页面内容将由JavaScript动态加载 -->
+</div>
+
+<script>
+// 页面切换逻辑
+document.addEventListener('DOMContentLoaded', function() {
+    // 导航点击事件
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const page = this.dataset.page;
+            showPage(page);
+        });
+    });
+    
+    // 主要按钮点击事件
+    document.getElementById('tb-primary-btn').addEventListener('click', function() {
+        showPage('new-novel');
+    });
+    
+    // 检查URL参数确定初始页面
+    const urlParams = new URLSearchParams(window.location.search);
+    const pageParam = urlParams.get('page');
+    
+    // 允许的页面列表
+    const allowedPages = ['dashboard', 'new-novel', 'writing', 'agents', 'settings'];
+    
+    if (pageParam && allowedPages.includes(pageParam)) {
+        showPage(pageParam);
+    } else {
+        // 初始显示dashboard
+        showPage('dashboard');
+    }
+});
+
+function showPage(pageId) {
+    console.log(`🔄 切换页面到: ${pageId}, URL参数: page=${new URLSearchParams(window.location.search).get('page')}`);
+    
+    // 特殊处理新建小说页面 - 重定向到增强版配置页面
+    if (pageId === 'new-novel') {
+        console.log('📖 重定向到增强版配置页面');
+        window.location.href = '/new/config';
+        return;
+    }
+    
+    // 更新导航状态
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.page === pageId) {
+            item.classList.add('active');
+        }
+    });
+    
+    // 隐藏所有页面
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    // 显示目标页面
+    const targetPage = document.getElementById('page-' + pageId);
+    if (targetPage) {
+        targetPage.classList.add('active');
+        console.log(`✅ 显示页面: page-${pageId}`);
+        
+        // 动态加载页面内容
+        loadPageContent(pageId);
+        
+        // 更新标题栏
+        updateTopbar(pageId);
+    } else {
+        console.error(`❌ 找不到页面元素: page-${pageId}`);
+    }
+}
+
+function loadPageContent(pageId) {
+    console.log(`📄 加载页面内容: ${pageId}`);
+    const pageElement = document.getElementById('page-' + pageId);
+    
+    if (!pageElement) {
+        console.error(`❌ 找不到页面元素: page-${pageId}`);
+        return;
+    }
+    
+    // 如果页面已有实际内容（不只是注释），不再加载
+    const pageHtml = pageElement.innerHTML.trim();
+    console.log(`📝 页面HTML长度: ${pageHtml.length}, 包含注释: ${pageHtml.includes('页面内容将由JavaScript动态加载')}`);
+    
+    if (pageHtml && !pageHtml.includes('页面内容将由JavaScript动态加载')) {
+        console.log(`⏩ 页面已有内容，跳过加载: ${pageId}`);
+        return;
+    }
+    
+    // 根据页面ID加载内容
+    switch(pageId) {
+        case 'dashboard':
+            console.log('🏠 dashboard内容已在模板中');
+            // 确保dashboard统计信息更新
+            if (window.GeniusWriter && typeof window.GeniusWriter.updateDashboardStats === 'function') {
+                console.log('📊 更新dashboard统计信息');
+                setTimeout(() => {
+                    window.GeniusWriter.updateDashboardStats();
+                }, 100);
+            }
+            break;
+        case 'new-novel':
+            console.log('📖 加载新建小说页面');
+            loadNewNovelPage();
+            break;
+        case 'writing':
+            console.log('✍️ 加载创作页面');
+            loadWritingPage();
+            break;
+        case 'agents':
+            console.log('🤖 加载代理中心页面');
+            loadAgentsPage();
+            break;
+        case 'settings':
+            console.log('⚙️ 加载设置页面');
+            loadSettingsPage();
+            break;
+        default:
+            console.error(`❌ 未知页面ID: ${pageId}`);
+    }
+}
+
+function loadNewNovelPage() {
+    // 这个页面已经重定向到/new/config，所以这里不需要内容
+    const pageElement = document.getElementById('page-new-novel');
+    pageElement.innerHTML = `
+        <div style="text-align: center; padding: 80px 20px;">
+            <div style="font-size: 64px; margin-bottom: 24px;">🔄</div>
+            <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: var(--ink);">
+                正在跳转到增强版配置页面...
+            </div>
+            <div style="font-size: 16px; color: var(--ink-soft); margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                如果跳转没有自动发生，请点击下方按钮。
+            </div>
+            <button class="tb-btn tb-btn-primary" style="padding: 16px 40px; font-size: 16px;" onclick="window.location.href='/new/config'">
+                前往配置页面
+            </button>
+        </div>
+    `;
+}
+
+function loadWritingPage() {
+    console.log('✍️ loadWritingPage() 开始');
+    const pageElement = document.getElementById('page-writing');
+    
+    if (!pageElement) {
+        console.error('❌ 找不到创作页面元素: page-writing');
+        return;
+    }
+    
+    // 显示加载中
+    pageElement.innerHTML = `
+        <div style="text-align: center; padding: 60px;">
+            <div style="font-size: 48px; margin-bottom: 20px;">✍️</div>
+            <div style="font-size: 18px; color: var(--ink); margin-bottom: 12px;">加载创作页面...</div>
+            <div style="font-size: 14px; color: var(--ink-soft);">请稍候</div>
+        </div>
+    `;
+    
+    // 延迟调用GeniusWriter的加载函数
+    setTimeout(() => {
+        attemptLoadWritingContent(pageElement, 0);
+    }, 100);
+    
+    function attemptLoadWritingContent(element, attempt) {
+        const maxAttempts = 5;
+        console.log(`🔄 尝试加载创作内容 (尝试 ${attempt + 1}/${maxAttempts})`);
+        console.log(`📋 检查GeniusWriter对象: ${window.GeniusWriter ? '存在' : '不存在'}`);
+        console.log(`📋 GeniusWriter.loadWritingContent: ${window.GeniusWriter && typeof window.GeniusWriter.loadWritingContent === 'function' ? '是函数' : '不是函数'}`);
+        
+        if (window.GeniusWriter && typeof window.GeniusWriter.loadWritingContent === 'function') {
+            console.log('✅ 调用GeniusWriter.loadWritingContent()');
+            window.GeniusWriter.loadWritingContent();
+        } else if (attempt < maxAttempts - 1) {
+            // 重试
+            console.log(`⏳ GeniusWriter未就绪，500ms后重试...`);
+            setTimeout(() => {
+                attemptLoadWritingContent(element, attempt + 1);
+            }, 500);
+        } else {
+            console.error('❌ GeniusWriter对象未初始化或loadWritingContent不是函数（超过最大重试次数）');
+            // 备用方案：显示错误消息
+            element.innerHTML = `
+                <div style="text-align: center; padding: 60px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                    <div style="font-size: 18px; color: var(--ink); margin-bottom: 12px;">加载失败</div>
+                    <div style="font-size: 14px; color: var(--ink-soft); margin-bottom: 32px;">
+                        GeniusWriter对象未初始化，请刷新页面。<br>
+                        <small>打开浏览器控制台(F12)查看详细错误信息</small>
+                    </div>
+                    <button class="tb-btn tb-btn-primary" onclick="window.location.reload()">刷新页面</button>
+                </div>
+            `;
+        }
+    }
+}
+
+function loadAgentsPage() {
+    console.log('🤖 loadAgentsPage() 开始');
+    const pageElement = document.getElementById('page-agents');
+    
+    if (!pageElement) {
+        console.error('❌ 找不到代理中心页面元素: page-agents');
+        return;
+    }
+    
+    console.log(`✅ 设置代理中心页面内容`);
+    pageElement.innerHTML = `
+        <div style="text-align: center; padding: 80px 20px;">
+            <div style="font-size: 64px; margin-bottom: 24px;">🤖</div>
+            <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: var(--ink);">
+                代理中心
+            </div>
+            <div style="font-size: 16px; color: var(--ink-soft); margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                管理AI代理设置和状态。
+            </div>
+            <div style="font-size: 14px; color: var(--ink-ghost);">
+                功能正在开发中...
+            </div>
+        </div>
+    `;
+}
+
+function loadSettingsPage() {
+    const pageElement = document.getElementById('page-settings');
+    pageElement.innerHTML = `
+        <div style="text-align: center; padding: 80px 20px;">
+            <div style="font-size: 64px; margin-bottom: 24px;">⚙️</div>
+            <div style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: var(--ink);">
+                设置
+            </div>
+            <div style="font-size: 16px; color: var(--ink-soft); margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                配置系统参数和创作偏好。
+            </div>
+            <div style="font-size: 14px; color: var(--ink-ghost);">
+                功能正在开发中...
+            </div>
+        </div>
+    `;
+}
+
+function initGenreSelection() {
+    const genres = [
+        { id: 'xianxia', name: '仙侠', desc: '修仙问道，飞升成仙', icon: '🧙' },
+        { id: 'wuxia', name: '武侠', desc: '江湖恩怨，武功绝学', icon: '⚔️' },
+        { id: 'urban', name: '都市', desc: '现代生活，职场情感', icon: '🏙️' },
+        { id: 'history', name: '历史', desc: '历史事件，朝代更迭', icon: '📜' },
+        { id: 'fantasy', name: '奇幻', desc: '魔法异界，幻想世界', icon: '🐉' },
+        { id: 'scifi', name: '科幻', desc: '未来科技，星际探索', icon: '🚀' },
+        { id: 'suspense', name: '悬疑', desc: '推理破案，谜团重重', icon: '🔍' },
+        { id: 'romance', name: '言情', desc: '爱情故事，情感纠葛', icon: '❤️' }
+    ];
+    
+    const container = document.getElementById('genre-selection');
+    if (!container) return;
+    
+    container.innerHTML = genres.map(genre => `
+        <div class="genre-card" data-genre="${genre.id}" onclick="selectGenre(this)">
+            <div class="genre-icon">${genre.icon}</div>
+            <div class="genre-name">${genre.name}</div>
+            <div class="genre-desc">${genre.desc}</div>
+        </div>
+    `).join('');
+}
+
+function selectGenre(card) {
+    document.querySelectorAll('.genre-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+}
+
+function nextStep(fromStep) {
+    // 验证当前步骤
+    if (fromStep === 1) {
+        const title = document.getElementById('novel-title').value.trim();
+        if (!title) {
+            alert('请输入小说名称');
+            return;
+        }
+        
+        const selectedGenre = document.querySelector('.genre-card.selected');
+        if (!selectedGenre) {
+            alert('请选择小说类型');
+            return;
+        }
+    }
+    
+    // 更新步骤
+    for (let i = 1; i <= 5; i++) {
+        const stepEl = document.getElementById('step-' + i);
+        const circleEl = document.getElementById('sc-' + i);
+        const panelEl = document.getElementById('panel-' + i);
+        
+        stepEl.classList.remove('active', 'done');
+        panelEl.classList.remove('active');
+        
+        if (i < fromStep + 1) {
+            stepEl.classList.add('done');
+            circleEl.innerHTML = '✓';
+        } else if (i === fromStep + 1) {
+            stepEl.classList.add('active');
+            circleEl.innerHTML = i;
+            panelEl.classList.add('active');
+        } else {
+            circleEl.innerHTML = i;
+        }
+    }
+}
+
+function prevStep(fromStep) {
+    // 更新步骤
+    for (let i = 1; i <= 5; i++) {
+        const stepEl = document.getElementById('step-' + i);
+        const circleEl = document.getElementById('sc-' + i);
+        const panelEl = document.getElementById('panel-' + i);
+        
+        stepEl.classList.remove('active', 'done');
+        panelEl.classList.remove('active');
+        
+        if (i < fromStep - 1) {
+            stepEl.classList.add('done');
+            circleEl.innerHTML = '✓';
+        } else if (i === fromStep - 1) {
+            stepEl.classList.add('active');
+            circleEl.innerHTML = i;
+            panelEl.classList.add('active');
+        } else {
+            circleEl.innerHTML = i;
+        }
+    }
+}
+
+function startWriting() {
+    // 保存配置到localStorage
+    const novelTitle = document.getElementById('novel-title').value.trim();
+    const selectedGenre = document.querySelector('.genre-card.selected');
+    const novelGenre = selectedGenre ? selectedGenre.dataset.genre : 'urban';
+    const novelDescription = document.getElementById('novel-description').value.trim();
+    
+    const novelConfig = {
+        title: novelTitle,
+        genre: novelGenre,
+        description: novelDescription,
+        createdAt: new Date().toISOString(),
+        chapters: [],
+        currentChapter: 1
+    };
+    
+    localStorage.setItem('geniuswriter_current_novel', JSON.stringify(novelConfig));
+    
+    // 切换到创作页面
+    showPage('writing');
+}
+
+function updateTopbar(pageId) {
+    const titleMap = {
+        'dashboard': ['GeniusWriter', '工作台'],
+        'new-novel': ['工作台', '新建小说'],
+        'writing': ['工作台', '创作中'],
+        'agents': ['GeniusWriter', '代理中心'],
+        'settings': ['GeniusWriter', '设置']
+    };
+    
+    const [parent, title] = titleMap[pageId] || ['GeniusWriter', pageId];
+    document.getElementById('tb-parent').textContent = parent;
+    document.getElementById('tb-title').textContent = title;
+    
+    // 更新主要按钮
+    const primaryBtn = document.getElementById('tb-primary-btn');
+    if (pageId === 'dashboard') {
+        primaryBtn.textContent = '＋ 新建小说';
+        primaryBtn.style.display = '';
+    } else if (pageId === 'writing') {
+        primaryBtn.textContent = '导出作品';
+        primaryBtn.style.display = '';
+    } else if (pageId === 'agents') {
+        primaryBtn.textContent = '管理代理';
+        primaryBtn.style.display = '';
+    } else {
+        primaryBtn.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

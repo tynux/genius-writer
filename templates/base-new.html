@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeniusWriter — AI小说创作平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style-new.css">
+    <script src="/static/js/geniuswriter-new.js" defer></script>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-mark">天才写手</div>
+        <div class="logo-sub">GeniusWriter · AI创作平台</div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-label">创作</div>
+        <div class="nav-item active" data-page="dashboard">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1z"/>
+            </svg>
+            工作台
+        </div>
+        <div class="nav-item" data-page="new-novel">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
+            </svg>
+            新建小说
+        </div>
+        <div class="nav-item" data-page="writing">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 2a1 1 0 000 2h8a1 1 0 100-2H6zm-1 5a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+            </svg>
+            创作中
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-label">管理</div>
+        <div class="nav-item" data-page="agents">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+            代理中心
+        </div>
+        <div class="nav-item" data-page="settings">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+            </svg>
+            设置
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="main-content">
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="tb-title">
+            <span class="tb-parent" id="tb-parent">GeniusWriter</span>
+            <span class="tb-sep">›</span>
+            <span id="tb-title">工作台</span>
+        </div>
+        <div class="tb-actions">
+            <button class="tb-btn tb-btn-secondary" id="tb-help-btn">帮助</button>
+            <button class="tb-btn tb-btn-primary" id="tb-primary-btn">＋ 新建小说</button>
+        </div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+</body>
+</html>

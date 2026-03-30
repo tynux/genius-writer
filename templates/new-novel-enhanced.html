@@ -1,0 +1,1316 @@
+{% extends "base-new.html" %}
+
+{% block content %}
+<div class="page active" id="page-new-novel">
+    <div class="wizard-container">
+        <div class="wizard-heading">开始创作新小说</div>
+        <div class="wizard-sub">跟随引导，设置你的小说基本信息、创作参数和AI代理配置。</div>
+        
+        <!-- 步骤导航 -->
+        <div class="wizard-steps">
+            <div class="step active" id="step-1">
+                <div class="step-circle" id="sc-1">1</div>
+                <div class="step-label">基本信息</div>
+            </div>
+            <div class="step" id="step-2">
+                <div class="step-circle" id="sc-2">2</div>
+                <div class="step-label">选择模型</div>
+            </div>
+            <div class="step" id="step-3">
+                <div class="step-circle" id="sc-3">3</div>
+                <div class="step-label">参数调整</div>
+            </div>
+            <div class="step" id="step-4">
+                <div class="step-circle" id="sc-4">4</div>
+                <div class="step-label">人物设定</div>
+            </div>
+            <div class="step" id="step-5">
+                <div class="step-circle" id="sc-5">5</div>
+                <div class="step-label">开始创作</div>
+            </div>
+        </div>
+        
+        <!-- 步骤1: 基本信息 -->
+        <div class="wizard-panel active" id="panel-1">
+            <div class="form-group">
+                <label class="form-label">小说名称</label>
+                <input type="text" class="form-input" placeholder="例如：江湖录·盛世风云" id="novel-title" required>
+                <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">好的标题能吸引读者，反映小说核心主题</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">小说类型</label>
+                <div class="genre-grid" id="genre-selection">
+                    <!-- 类型卡片由JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">章节数量</label>
+                    <input type="number" class="form-input" id="chapters-count" value="10" min="1" max="500">
+                    <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">建议10-100章</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">每章字数</label>
+                    <input type="number" class="form-input" id="words-per-chapter" value="3000" min="500" max="10000">
+                    <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">建议2000-5000字</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">写作风格</label>
+                <select class="form-select" id="writing-style">
+                    <option value="通俗性">通俗性 - 大众易读</option>
+                    <option value="文学性">文学性 - 文字优美</option>
+                    <option value="口语化">口语化 - 对话自然</option>
+                    <option value="古风">古风 - 古典韵味</option>
+                    <option value="现代">现代 - 简洁明快</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">目标读者</label>
+                <select class="form-select" id="target-audience">
+                    <option value="general">大众读者</option>
+                    <option value="young-adult">青少年</option>
+                    <option value="adult">成人</option>
+                    <option value="professional">专业读者</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">特别要求</label>
+                <textarea class="form-textarea" id="additional-info" placeholder="描述你的小说核心概念、主题或灵感来源..."></textarea>
+            </div>
+            
+            <div class="flex justify-between mt-8">
+                <button class="tb-btn tb-btn-secondary" disabled>上一步</button>
+                <button class="tb-btn tb-btn-primary" onclick="GeniusWriterConfig.nextStep(1)">下一步：选择模型</button>
+            </div>
+        </div>
+        
+        <!-- 步骤2: 选择模型 -->
+        <div class="wizard-panel" id="panel-2">
+            <div class="form-group">
+                <label class="form-label">创作模型选择</label>
+                <div style="font-size: 14px; color: var(--ink-soft); margin-bottom: 20px;">
+                    选择适合你创作需求的AI模型。每个模型都有不同的特点和优势。
+                </div>
+                
+                <div class="model-grid" id="model-selection">
+                    <!-- 模型卡片由JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <!-- API密钥配置区域 -->
+            <div class="api-config-section" id="api-config-section" style="margin-top: 24px; display: none;">
+                <div class="form-group">
+                    <label class="form-label">API密钥配置</label>
+                    <div style="font-size: 14px; color: var(--ink-soft); margin-bottom: 16px;">
+                        输入对应模型的API密钥以启用完整功能
+                    </div>
+                    
+                    <!-- OpenAI配置 -->
+                    <div id="openai-config" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">OpenAI API密钥</label>
+                            <div style="position: relative;">
+                                <input type="password" class="form-input" id="openai-key" placeholder="sk-...">
+                                <button type="button" class="api-key-toggle" id="toggle-openai-key" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--ink-soft); cursor: pointer;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">
+                                获取地址: <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--gold);">platform.openai.com</a>
+                            </div>
+                            <button type="button" class="tb-btn tb-btn-secondary mt-2" id="test-openai" style="padding: 8px 16px; font-size: 13px;">测试连接</button>
+                            <div id="openai-test-result" class="test-result" style="margin-top: 8px;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- DeepSeek配置 -->
+                    <div id="deepseek-config" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">DeepSeek API密钥</label>
+                            <div style="position: relative;">
+                                <input type="password" class="form-input" id="deepseek-key" placeholder="sk-...">
+                                <button type="button" class="api-key-toggle" id="toggle-deepseek-key" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--ink-soft); cursor: pointer;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">
+                                获取地址: <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color: var(--gold);">platform.deepseek.com</a>
+                            </div>
+                            <button type="button" class="tb-btn tb-btn-secondary mt-2" id="test-deepseek" style="padding: 8px 16px; font-size: 13px;">测试连接</button>
+                            <div id="deepseek-test-result" class="test-result" style="margin-top: 8px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模型预览 -->
+            <div class="model-preview" style="margin-top: 32px; padding: 20px; background: var(--paper-warm); border-radius: 10px; border: 1px solid var(--paper-border);">
+                <div style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--ink);">模型预览</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                    <div>
+                        <div style="font-size: 13px; color: var(--ink-soft);">选择的模型</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--ink);" id="preview-selected-model">未选择</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; color: var(--ink-soft);">连接状态</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--ink);" id="preview-connection-status">未验证</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; color: var(--ink-soft);">推荐用途</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--ink);" id="preview-recommendation">--</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; color: var(--ink-soft);">成本预估</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--ink);" id="preview-cost-estimation">--</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-between mt-8">
+                <button class="tb-btn tb-btn-secondary" onclick="GeniusWriterConfig.prevStep(2)">上一步</button>
+                <button class="tb-btn tb-btn-primary" onclick="GeniusWriterConfig.nextStep(2)">下一步：参数调整</button>
+            </div>
+        </div>
+        
+        <!-- 步骤3: 参数调整 -->
+        <div class="wizard-panel" id="panel-3">
+            <div class="form-group">
+                <label class="form-label">创作参数调整</label>
+                <div style="font-size: 14px; color: var(--ink-soft); margin-bottom: 24px;">
+                    调整AI创作的核心参数，控制生成内容的质量和风格
+                </div>
+                
+                <!-- 快速预设 -->
+                <div style="margin-bottom: 32px;">
+                    <div style="font-size: 15px; font-weight: 500; margin-bottom: 12px; color: var(--ink);">快速预设</div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button class="preset-btn active" data-preset="balanced">平衡模式</button>
+                        <button class="preset-btn" data-preset="creative">创意优先</button>
+                        <button class="preset-btn" data-preset="precise">精确控制</button>
+                        <button class="preset-btn" data-preset="detailed">细节丰富</button>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">创造力水平</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="range" min="0" max="20" value="14" class="slider" id="creativity-slider">
+                            <span style="min-width: 40px; font-weight: 600;" id="creativity-value">0.7</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">
+                            控制AI的创意程度：低(保守) ↔ 高(创意)
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">最大生成长度</label>
+                        <input type="number" class="form-input" id="max-length" value="4000" min="500" max="16000">
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">
+                            每轮AI生成的最大字符数 (500-16000)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">内容多样性</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="range" min="0" max="10" value="5" class="slider" id="diversity-slider">
+                            <span style="min-width: 40px; font-weight: 600;" id="diversity-value">中等</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">
+                            控制生成内容的多样性：低(一致) ↔ 高(多样)
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">总监层参与度</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="range" min="0" max="10" value="8" class="slider" id="tier1-slider">
+                            <span style="min-width: 50px; font-weight: 600;" id="tier1-value">80%</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">
+                            创意总监对整体方向的把控程度
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">专家层参与度</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="range" min="0" max="10" value="9" class="slider" id="tier3-slider">
+                            <span style="min-width: 50px; font-weight: 600;" id="tier3-value">90%</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">
+                            各领域专家对具体内容的把控程度
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">总字数预估</label>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--gold);" id="total-words-preview">30,000</div>
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-top: 4px;">
+                            = 章节数 × 每章字数
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 工作流选项 -->
+                <div style="margin-top: 32px;">
+                    <div style="font-size: 15px; font-weight: 500; margin-bottom: 16px; color: var(--ink);">工作流选项</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="enable-quality-check" checked>
+                            <span style="font-size: 14px;">质量检查</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="enable-auto-format" checked>
+                            <span style="font-size: 14px;">自动格式化</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="enable-versioning">
+                            <span style="font-size: 14px;">版本控制</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="enable-feedback" checked>
+                            <span style="font-size: 14px;">反馈机制</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 参数效果预览 -->
+                <div class="parameter-preview" style="margin-top: 32px; padding: 20px; background: var(--paper-warm); border-radius: 10px; border: 1px solid var(--paper-border);">
+                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--ink);">参数效果预览</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
+                        <div>
+                            <div style="font-size: 13px; color: var(--ink-soft);">创意程度</div>
+                            <div style="font-size: 16px; font-weight: 600; color: var(--ink);" id="preview-creativity">中等</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--ink-soft);">描写深度</div>
+                            <div style="font-size: 16px; font-weight: 600; color: var(--ink);" id="preview-depth">适中</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--ink-soft);">专家参与</div>
+                            <div style="font-size: 16px; font-weight: 600; color: var(--ink);" id="preview-expertise">高度</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--ink-soft);">质量检查</div>
+                            <div style="font-size: 16px; font-weight: 600; color: var(--ink);" id="preview-quality">严格</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-between mt-8">
+                <button class="tb-btn tb-btn-secondary" onclick="GeniusWriterConfig.prevStep(3)">上一步</button>
+                <button class="tb-btn tb-btn-primary" onclick="GeniusWriterConfig.nextStep(3)">下一步：人物设定</button>
+            </div>
+        </div>
+        
+        <!-- 步骤4: 人物设定（简化版） -->
+        <div class="wizard-panel" id="panel-4">
+            <div class="form-group">
+                <label class="form-label">主要人物设定</label>
+                <div style="font-size: 14px; color: var(--ink-soft); margin-bottom: 24px;">
+                    设定主要人物的基本信息，这有助于AI生成更符合角色性格的内容
+                </div>
+                
+                <div class="char-list" id="char-list">
+                    <div class="char-row">
+                        <input class="char-input" placeholder="姓名" value="林清风">
+                        <input class="char-input" placeholder="简要描述" value="年轻剑客，正义感强">
+                        <select class="char-role-select">
+                            <option selected>主角</option>
+                            <option>配角</option>
+                            <option>反派</option>
+                            <option>路人</option>
+                        </select>
+                        <button class="btn-remove" disabled>×</button>
+                    </div>
+                    
+                    <div class="char-row">
+                        <input class="char-input" placeholder="姓名" value="苏婉儿">
+                        <input class="char-input" placeholder="简要描述" value="医术高超的医女">
+                        <select class="char-role-select">
+                            <option>主角</option>
+                            <option selected>配角</option>
+                            <option>反派</option>
+                            <option>路人</option>
+                        </select>
+                        <button class="btn-remove" onclick="GeniusWriterConfig.removeChar(this)">×</button>
+                    </div>
+                </div>
+                
+                <button class="btn-add" onclick="GeniusWriterConfig.addChar()">＋ 添加人物</button>
+            </div>
+            
+            <div class="flex justify-between mt-8">
+                <button class="tb-btn tb-btn-secondary" onclick="GeniusWriterConfig.prevStep(4)">上一步</button>
+                <button class="tb-btn tb-btn-primary" onclick="GeniusWriterConfig.nextStep(4)">下一步：开始创作</button>
+            </div>
+        </div>
+        
+        <!-- 步骤5: 开始创作 -->
+        <div class="wizard-panel" id="panel-5">
+            <div class="final-summary">
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🎉</div>
+                    <div style="font-size: 28px; font-weight: 700; color: var(--ink); margin-bottom: 12px;">配置完成！</div>
+                    <div style="font-size: 16px; color: var(--ink-soft); max-width: 600px; margin: 0 auto; line-height: 1.6;">
+                        你的小说配置已保存，现在可以开始创作了。系统已根据你的设置优化了AI创作参数。
+                    </div>
+                </div>
+                
+                <div class="summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                    <div style="text-align: center; padding: 20px; background: var(--paper-warm); border-radius: 10px; border: 1px solid var(--paper-border);">
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-bottom: 8px;">小说名称</div>
+                        <div style="font-size: 18px; font-weight: 600; color: var(--ink);" id="summary-title">--</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; background: var(--paper-warm); border-radius: 10px; border: 1px solid var(--paper-border);">
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-bottom: 8px;">章节数量</div>
+                        <div style="font-size: 18px; font-weight: 600; color: var(--ink);" id="summary-chapters">--</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; background: var(--paper-warm); border-radius: 10px; border: 1px solid var(--paper-border);">
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-bottom: 8px;">总字数</div>
+                        <div style="font-size: 18px; font-weight: 600; color: var(--ink);" id="summary-words">--</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; background: var(--paper-warm); border-radius: 10px; border: 1px solid var(--paper-border);">
+                        <div style="font-size: 13px; color: var(--ink-soft); margin-bottom: 8px;">创作模型</div>
+                        <div style="font-size: 18px; font-weight: 600; color: var(--ink);" id="summary-model">--</div>
+                    </div>
+                </div>
+                
+                <div style="max-width: 400px; margin: 0 auto;">
+                    <button class="tb-btn tb-btn-primary" style="padding: 16px 40px; font-size: 16px; width: 100%;" onclick="GeniusWriterConfig.startWriting()">
+                        开始创作第一部小说
+                    </button>
+                    <button class="tb-btn tb-btn-secondary mt-4" style="width: 100%;" onclick="GeniusWriterConfig.prevStep(5)">
+                        返回修改配置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// GeniusWriter 配置模块
+const GeniusWriterConfig = {
+    // 配置数据
+    configData: {
+        step: 1,
+        novel: {
+            title: '',
+            genre: 'urban',
+            chapters: 10,
+            wordsPerChapter: 3000,
+            writingStyle: '通俗性',
+            targetAudience: 'general',
+            additionalInfo: ''
+        },
+        model: {
+            selected: 'openai',
+            openai: { apiKey: '', validated: false },
+            deepseek: { apiKey: '', validated: false },
+            simulated: { validated: true }
+        },
+        parameters: {
+            creativity: 0.7,
+            maxLength: 4000,
+            diversity: 5,
+            tier1Involvement: 0.8,
+            tier3Involvement: 0.9
+        },
+        workflows: {
+            qualityCheck: true,
+            autoFormat: true,
+            versioning: false,
+            feedback: true
+        },
+        characters: [
+            { name: '林清风', description: '年轻剑客，正义感强', role: '主角' },
+            { name: '苏婉儿', description: '医术高超的医女', role: '配角' }
+        ]
+    },
+    
+    // 初始化配置页面
+    init() {
+        console.log('🔧 GeniusWriter配置页面初始化');
+        
+        // 初始化类型选择
+        this.initGenreSelection();
+        
+        // 初始化模型选择
+        this.initModelSelection();
+        
+        // 初始化参数滑块
+        this.initParameterSliders();
+        
+        // 初始化工作流选项
+        this.initWorkflowOptions();
+        
+        // 初始化事件监听器
+        this.initEventListeners();
+        
+        // 更新总字数预览
+        this.updateTotalWordsPreview();
+        
+        // 更新最终摘要
+        this.updateFinalSummary();
+        
+        console.log('✅ 配置页面初始化完成');
+    },
+    
+    // 初始化类型选择
+    initGenreSelection() {
+        const genres = [
+            { id: 'xianxia', name: '仙侠', desc: '修仙问道，飞升成仙', icon: '🧙' },
+            { id: 'wuxia', name: '武侠', desc: '江湖恩怨，武功绝学', icon: '⚔️' },
+            { id: 'urban', name: '都市', desc: '现代生活，职场情感', icon: '🏙️' },
+            { id: 'history', name: '历史', desc: '历史事件，朝代更迭', icon: '📜' },
+            { id: 'fantasy', name: '奇幻', desc: '魔法异界，幻想世界', icon: '🐉' },
+            { id: 'scifi', name: '科幻', desc: '未来科技，星际探索', icon: '🚀' },
+            { id: 'suspense', name: '悬疑', desc: '推理破案，谜团重重', icon: '🔍' },
+            { id: 'romance', name: '言情', desc: '爱情故事，情感纠葛', icon: '❤️' }
+        ];
+        
+        const container = document.getElementById('genre-selection');
+        if (!container) return;
+        
+        container.innerHTML = genres.map(genre => `
+            <div class="genre-card" data-genre="${genre.id}">
+                <div class="genre-icon">${genre.icon}</div>
+                <div class="genre-name">${genre.name}</div>
+                <div class="genre-desc">${genre.desc}</div>
+            </div>
+        `).join('');
+        
+        // 绑定点击事件
+        container.querySelectorAll('.genre-card').forEach(card => {
+            card.addEventListener('click', () => {
+                this.selectGenre(card);
+            });
+        });
+        
+        // 默认选择都市类型
+        const defaultCard = container.querySelector('.genre-card[data-genre="urban"]');
+        if (defaultCard) {
+            this.selectGenre(defaultCard);
+        }
+    },
+    
+    // 选择类型
+    selectGenre(card) {
+        const container = document.getElementById('genre-selection');
+        if (!container) return;
+        
+        container.querySelectorAll('.genre-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        
+        this.configData.novel.genre = card.dataset.genre;
+        console.log(`✅ 选择小说类型: ${this.configData.novel.genre}`);
+    },
+    
+    // 初始化模型选择
+    initModelSelection() {
+        const models = [
+            { id: 'openai', name: 'OpenAI GPT系列', desc: '强大的通用语言模型，适合各种类型的小说创作', icon: '🤖', recommendation: '创意写作、文学性表达', cost: '中等' },
+            { id: 'deepseek', name: 'DeepSeek', desc: '优秀的国产模型，中文理解能力强，性价比高', icon: '🔍', recommendation: '中文小说、历史题材', cost: '较低' },
+            { id: 'simulated', name: '模拟模式', desc: '无需API密钥，快速体验创作流程', icon: '🎭', recommendation: '功能测试、快速体验', cost: '免费' }
+        ];
+        
+        const container = document.getElementById('model-selection');
+        if (!container) return;
+        
+        container.innerHTML = models.map(model => `
+            <div class="model-card" data-model="${model.id}">
+                <div class="model-icon">${model.icon}</div>
+                <div class="model-name">${model.name}</div>
+                <div class="model-desc">${model.desc}</div>
+            </div>
+        `).join('');
+        
+        // 绑定点击事件
+        container.querySelectorAll('.model-card').forEach(card => {
+            card.addEventListener('click', () => {
+                this.selectModel(card);
+            });
+        });
+        
+        // 默认选择OpenAI
+        const defaultCard = container.querySelector('.model-card[data-model="openai"]');
+        if (defaultCard) {
+            this.selectModel(defaultCard);
+        }
+    },
+    
+    // 选择模型
+    selectModel(card) {
+        const container = document.getElementById('model-selection');
+        if (!container) return;
+        
+        container.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        
+        const model = card.dataset.model;
+        this.configData.model.selected = model;
+        
+        console.log(`✅ 选择创作模型: ${model}`);
+        
+        // 更新API配置区域显示
+        this.updateApiConfigVisibility(model);
+        
+        // 更新模型预览
+        this.updateModelPreview(model);
+    },
+    
+    // 更新API配置区域显示
+    updateApiConfigVisibility(model) {
+        const apiConfigSection = document.getElementById('api-config-section');
+        const openaiConfig = document.getElementById('openai-config');
+        const deepseekConfig = document.getElementById('deepseek-config');
+        
+        if (!apiConfigSection || !openaiConfig || !deepseekConfig) return;
+        
+        if (model === 'simulated') {
+            apiConfigSection.style.display = 'none';
+        } else {
+            apiConfigSection.style.display = 'block';
+            openaiConfig.style.display = model === 'openai' ? 'block' : 'none';
+            deepseekConfig.style.display = model === 'deepseek' ? 'block' : 'none';
+        }
+    },
+    
+    // 更新模型预览
+    updateModelPreview(model) {
+        const modelNames = {
+            'openai': 'OpenAI GPT系列',
+            'deepseek': 'DeepSeek',
+            'simulated': '模拟模式'
+        };
+        
+        const recommendations = {
+            'openai': '创意写作、文学性表达',
+            'deepseek': '中文小说、历史题材',
+            'simulated': '功能测试、快速体验'
+        };
+        
+        const costs = {
+            'openai': '中等（按token计费）',
+            'deepseek': '较低（性价比高）',
+            'simulated': '免费'
+        };
+        
+        const modelConfig = this.configData.model[model];
+        const status = modelConfig && modelConfig.validated ? '已验证' : '未验证';
+        
+        document.getElementById('preview-selected-model').textContent = modelNames[model] || '未选择';
+        document.getElementById('preview-connection-status').textContent = status;
+        document.getElementById('preview-recommendation').textContent = recommendations[model] || '--';
+        document.getElementById('preview-cost-estimation').textContent = costs[model] || '--';
+    },
+    
+    // 初始化参数滑块
+    initParameterSliders() {
+        // 创造力滑块
+        const creativitySlider = document.getElementById('creativity-slider');
+        if (creativitySlider) {
+            creativitySlider.value = this.configData.parameters.creativity * 10;
+            creativitySlider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value) / 10;
+                this.configData.parameters.creativity = value;
+                document.getElementById('creativity-value').textContent = value.toFixed(1);
+                this.updateParameterPreview();
+            });
+        }
+        
+        // 多样性滑块
+        const diversitySlider = document.getElementById('diversity-slider');
+        if (diversitySlider) {
+            diversitySlider.addEventListener('input', (e) => {
+                this.configData.parameters.diversity = parseInt(e.target.value);
+                const valueText = this.getDiversityText(this.configData.parameters.diversity);
+                document.getElementById('diversity-value').textContent = valueText;
+                this.updateParameterPreview();
+            });
+        }
+        
+        // 总监层参与度滑块
+        const tier1Slider = document.getElementById('tier1-slider');
+        if (tier1Slider) {
+            tier1Slider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value) / 10;
+                this.configData.parameters.tier1Involvement = value;
+                document.getElementById('tier1-value').textContent = Math.round(value * 100) + '%';
+                this.updateParameterPreview();
+            });
+        }
+        
+        // 专家层参与度滑块
+        const tier3Slider = document.getElementById('tier3-slider');
+        if (tier3Slider) {
+            tier3Slider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value) / 10;
+                this.configData.parameters.tier3Involvement = value;
+                document.getElementById('tier3-value').textContent = Math.round(value * 100) + '%';
+                this.updateParameterPreview();
+            });
+        }
+        
+        // 最大长度输入
+        const maxLengthInput = document.getElementById('max-length');
+        if (maxLengthInput) {
+            maxLengthInput.addEventListener('input', (e) => {
+                this.configData.parameters.maxLength = parseInt(e.target.value) || 4000;
+                this.updateParameterPreview();
+            });
+        }
+        
+        // 章节数量输入
+        const chaptersInput = document.getElementById('chapters-count');
+        if (chaptersInput) {
+            chaptersInput.addEventListener('input', (e) => {
+                this.configData.novel.chapters = parseInt(e.target.value) || 10;
+                this.updateTotalWordsPreview();
+                this.updateFinalSummary();
+            });
+        }
+        
+        // 每章字数输入
+        const wordsInput = document.getElementById('words-per-chapter');
+        if (wordsInput) {
+            wordsInput.addEventListener('input', (e) => {
+                this.configData.novel.wordsPerChapter = parseInt(e.target.value) || 3000;
+                this.updateTotalWordsPreview();
+                this.updateFinalSummary();
+            });
+        }
+        
+        // 小说标题输入
+        const titleInput = document.getElementById('novel-title');
+        if (titleInput) {
+            titleInput.addEventListener('input', (e) => {
+                this.configData.novel.title = e.target.value;
+                this.updateFinalSummary();
+            });
+        }
+        
+        // 写作风格选择
+        const styleSelect = document.getElementById('writing-style');
+        if (styleSelect) {
+            styleSelect.addEventListener('change', (e) => {
+                this.configData.novel.writingStyle = e.target.value;
+            });
+        }
+        
+        // 目标读者选择
+        const audienceSelect = document.getElementById('target-audience');
+        if (audienceSelect) {
+            audienceSelect.addEventListener('change', (e) => {
+                this.configData.novel.targetAudience = e.target.value;
+            });
+        }
+        
+        // 特别要求文本域
+        const additionalTextarea = document.getElementById('additional-info');
+        if (additionalTextarea) {
+            additionalTextarea.addEventListener('input', (e) => {
+                this.configData.novel.additionalInfo = e.target.value;
+            });
+        }
+        
+        // 初始化参数预览
+        this.updateParameterPreview();
+    },
+    
+    // 获取多样性文本
+    getDiversityText(value) {
+        if (value <= 3) return '较低';
+        if (value <= 7) return '中等';
+        return '较高';
+    },
+    
+    // 更新参数预览
+    updateParameterPreview() {
+        const creativity = this.configData.parameters.creativity;
+        const diversity = this.configData.parameters.diversity;
+        const tier1 = this.configData.parameters.tier1Involvement;
+        const tier3 = this.configData.parameters.tier3Involvement;
+        const maxLength = this.configData.parameters.maxLength;
+        
+        const creativityText = creativity <= 0.5 ? '严谨' : creativity <= 0.8 ? '中等' : '创意';
+        const depthText = maxLength <= 2000 ? '简洁' : maxLength <= 4000 ? '适中' : '详细';
+        const expertiseText = tier3 <= 0.7 ? '基础' : tier3 <= 0.9 ? '中等' : '高度';
+        const qualityText = this.configData.workflows.qualityCheck ? '严格' : '宽松';
+        
+        document.getElementById('preview-creativity').textContent = creativityText;
+        document.getElementById('preview-depth').textContent = depthText;
+        document.getElementById('preview-expertise').textContent = expertiseText;
+        document.getElementById('preview-quality').textContent = qualityText;
+    },
+    
+    // 更新总字数预览
+    updateTotalWordsPreview() {
+        const chapters = this.configData.novel.chapters || 10;
+        const wordsPerChapter = this.configData.novel.wordsPerChapter || 3000;
+        const totalWords = chapters * wordsPerChapter;
+        
+        document.getElementById('total-words-preview').textContent = totalWords.toLocaleString();
+    },
+    
+    // 初始化工作流选项
+    initWorkflowOptions() {
+        const checkboxes = [
+            'enable-quality-check',
+            'enable-auto-format',
+            'enable-versioning',
+            'enable-feedback'
+        ];
+        
+        checkboxes.forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) {
+                const key = id.replace('enable-', '');
+                checkbox.checked = this.configData.workflows[key];
+                
+                checkbox.addEventListener('change', (e) => {
+                    this.configData.workflows[key] = e.target.checked;
+                    this.updateParameterPreview();
+                });
+            }
+        });
+    },
+    
+    // 初始化事件监听器
+    initEventListeners() {
+        // 快速预设按钮
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const preset = e.target.dataset.preset;
+                this.applyPreset(preset);
+            });
+        });
+        
+        // API密钥显示/隐藏
+        this.initApiKeyToggles();
+        
+        // API测试按钮
+        this.initApiTestButtons();
+        
+        // 表单输入实时更新
+        this.initFormInputs();
+    },
+    
+    // 应用预设
+    applyPreset(preset) {
+        // 更新按钮状态
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.preset === preset) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // 应用预设值
+        switch(preset) {
+            case 'balanced':
+                this.configData.parameters.creativity = 0.7;
+                this.configData.parameters.diversity = 5;
+                this.configData.parameters.tier1Involvement = 0.8;
+                this.configData.parameters.tier3Involvement = 0.9;
+                break;
+            case 'creative':
+                this.configData.parameters.creativity = 0.9;
+                this.configData.parameters.diversity = 8;
+                this.configData.parameters.tier1Involvement = 0.9;
+                this.configData.parameters.tier3Involvement = 0.7;
+                break;
+            case 'precise':
+                this.configData.parameters.creativity = 0.5;
+                this.configData.parameters.diversity = 3;
+                this.configData.parameters.tier1Involvement = 0.7;
+                this.configData.parameters.tier3Involvement = 0.95;
+                break;
+            case 'detailed':
+                this.configData.parameters.creativity = 0.6;
+                this.configData.parameters.diversity = 6;
+                this.configData.parameters.tier1Involvement = 0.85;
+                this.configData.parameters.tier3Involvement = 0.85;
+                break;
+        }
+        
+        // 更新滑块显示
+        this.updateSlidersFromConfig();
+        
+        // 更新参数预览
+        this.updateParameterPreview();
+    },
+    
+    // 从配置更新滑块
+    updateSlidersFromConfig() {
+        const creativitySlider = document.getElementById('creativity-slider');
+        const diversitySlider = document.getElementById('diversity-slider');
+        const tier1Slider = document.getElementById('tier1-slider');
+        const tier3Slider = document.getElementById('tier3-slider');
+        
+        if (creativitySlider) {
+            creativitySlider.value = this.configData.parameters.creativity * 10;
+            document.getElementById('creativity-value').textContent = this.configData.parameters.creativity.toFixed(1);
+        }
+        
+        if (diversitySlider) {
+            diversitySlider.value = this.configData.parameters.diversity;
+            document.getElementById('diversity-value').textContent = this.getDiversityText(this.configData.parameters.diversity);
+        }
+        
+        if (tier1Slider) {
+            tier1Slider.value = this.configData.parameters.tier1Involvement * 10;
+            document.getElementById('tier1-value').textContent = Math.round(this.configData.parameters.tier1Involvement * 100) + '%';
+        }
+        
+        if (tier3Slider) {
+            tier3Slider.value = this.configData.parameters.tier3Involvement * 10;
+            document.getElementById('tier3-value').textContent = Math.round(this.configData.parameters.tier3Involvement * 100) + '%';
+        }
+    },
+    
+    // 初始化API密钥显示/隐藏
+    initApiKeyToggles() {
+        // OpenAI密钥切换
+        const toggleOpenAI = document.getElementById('toggle-openai-key');
+        if (toggleOpenAI) {
+            toggleOpenAI.addEventListener('click', () => {
+                const input = document.getElementById('openai-key');
+                const icon = toggleOpenAI.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.className = 'fas fa-eye-slash';
+                } else {
+                    input.type = 'password';
+                    icon.className = 'fas fa-eye';
+                }
+            });
+        }
+        
+        // DeepSeek密钥切换
+        const toggleDeepSeek = document.getElementById('toggle-deepseek-key');
+        if (toggleDeepSeek) {
+            toggleDeepSeek.addEventListener('click', () => {
+                const input = document.getElementById('deepseek-key');
+                const icon = toggleDeepSeek.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.className = 'fas fa-eye-slash';
+                } else {
+                    input.type = 'password';
+                    icon.className = 'fas fa-eye';
+                }
+            });
+        }
+    },
+    
+    // 初始化API测试按钮
+    initApiTestButtons() {
+        // OpenAI测试
+        const testOpenAI = document.getElementById('test-openai');
+        if (testOpenAI) {
+            testOpenAI.addEventListener('click', () => {
+                this.testApiConnection('openai');
+            });
+        }
+        
+        // DeepSeek测试
+        const testDeepSeek = document.getElementById('test-deepseek');
+        if (testDeepSeek) {
+            testDeepSeek.addEventListener('click', () => {
+                this.testApiConnection('deepseek');
+            });
+        }
+    },
+    
+    // 测试API连接
+    testApiConnection(provider) {
+        const modelConfig = this.configData.model[provider];
+        const apiKeyInput = document.getElementById(`${provider}-key`);
+        const resultEl = document.getElementById(`${provider}-test-result`);
+        
+        if (!apiKeyInput || !resultEl) return;
+        
+        const apiKey = apiKeyInput.value.trim();
+        
+        if (!apiKey || !apiKey.startsWith('sk-')) {
+            this.showTestResult(provider, 'error', 'API密钥格式无效，应以"sk-"开头');
+            return;
+        }
+        
+        // 保存API密钥
+        modelConfig.apiKey = apiKey;
+        
+        // 显示测试中状态
+        this.showTestResult(provider, 'info', '测试连接中...');
+        
+        // 模拟API测试
+        setTimeout(() => {
+            const success = Math.random() > 0.3; // 70%成功率
+            if (success) {
+                modelConfig.validated = true;
+                this.showTestResult(provider, 'success', '连接测试成功！API密钥有效');
+                this.updateModelPreview(this.configData.model.selected);
+            } else {
+                this.showTestResult(provider, 'error', '连接测试失败，请检查API密钥和网络连接');
+            }
+        }, 1000);
+    },
+    
+    // 显示测试结果
+    showTestResult(provider, type, message) {
+        const resultEl = document.getElementById(`${provider}-test-result`);
+        if (!resultEl) return;
+        
+        resultEl.textContent = message;
+        resultEl.className = 'test-result';
+        
+        switch (type) {
+            case 'success':
+                resultEl.style.color = 'var(--green-accent)';
+                resultEl.style.background = 'rgba(45, 90, 61, 0.1)';
+                resultEl.style.border = '1px solid rgba(45, 90, 61, 0.2)';
+                break;
+            case 'error':
+                resultEl.style.color = 'var(--red-accent)';
+                resultEl.style.background = 'rgba(139, 32, 32, 0.1)';
+                resultEl.style.border = '1px solid rgba(139, 32, 32, 0.2)';
+                break;
+            case 'info':
+                resultEl.style.color = 'var(--gold)';
+                resultEl.style.background = 'rgba(201, 146, 42, 0.1)';
+                resultEl.style.border = '1px solid rgba(201, 146, 42, 0.2)';
+                break;
+        }
+    },
+    
+    // 初始化表单输入
+    initFormInputs() {
+        // API密钥输入验证
+        const openaiKeyInput = document.getElementById('openai-key');
+        if (openaiKeyInput) {
+            openaiKeyInput.addEventListener('input', (e) => {
+                const key = e.target.value;
+                this.configData.model.openai.apiKey = key;
+                this.configData.model.openai.validated = key.startsWith('sk-');
+                this.updateModelPreview(this.configData.model.selected);
+            });
+        }
+        
+        const deepseekKeyInput = document.getElementById('deepseek-key');
+        if (deepseekKeyInput) {
+            deepseekKeyInput.addEventListener('input', (e) => {
+                const key = e.target.value;
+                this.configData.model.deepseek.apiKey = key;
+                this.configData.model.deepseek.validated = key.startsWith('sk-');
+                this.updateModelPreview(this.configData.model.selected);
+            });
+        }
+    },
+    
+    // 添加人物
+    addChar() {
+        const list = document.getElementById('char-list');
+        const row = document.createElement('div');
+        row.className = 'char-row';
+        row.innerHTML = `
+            <input class="char-input" placeholder="姓名">
+            <input class="char-input" placeholder="简要描述">
+            <select class="char-role-select">
+                <option>主角</option>
+                <option selected>配角</option>
+                <option>反派</option>
+                <option>路人</option>
+            </select>
+            <button class="btn-remove" onclick="GeniusWriterConfig.removeChar(this)">×</button>
+        `;
+        list.appendChild(row);
+    },
+    
+    // 移除人物
+    removeChar(btn) {
+        const rows = document.querySelectorAll('.char-row');
+        if (rows.length > 1) {
+            btn.closest('.char-row').remove();
+        }
+    },
+    
+    // 下一步
+    nextStep(currentStep) {
+        // 验证当前步骤
+        if (!this.validateStep(currentStep)) {
+            return;
+        }
+        
+        // 更新配置数据中的步骤
+        this.configData.step = currentStep + 1;
+        
+        // 更新步骤UI
+        this.updateWizardSteps(currentStep + 1);
+    },
+    
+    // 上一步
+    prevStep(currentStep) {
+        this.configData.step = currentStep - 1;
+        this.updateWizardSteps(currentStep - 1);
+    },
+    
+    // 验证步骤
+    validateStep(step) {
+        switch(step) {
+            case 1:
+                const titleInput = document.getElementById('novel-title');
+                if (!titleInput || !titleInput.value.trim()) {
+                    alert('请输入小说名称');
+                    titleInput?.focus();
+                    return false;
+                }
+                
+                const selectedGenre = document.querySelector('.genre-card.selected');
+                if (!selectedGenre) {
+                    alert('请选择小说类型');
+                    return false;
+                }
+                return true;
+                
+            case 2:
+                if (!this.configData.model.selected) {
+                    alert('请选择创作模型');
+                    return false;
+                }
+                
+                // 如果是真实模型，验证API密钥
+                const selectedModel = this.configData.model.selected;
+                if (selectedModel !== 'simulated') {
+                    const modelConfig = this.configData.model[selectedModel];
+                    const apiKey = modelConfig.apiKey;
+                    if (!apiKey || !apiKey.trim() || !apiKey.startsWith('sk-')) {
+                        alert(`请输入有效的${selectedModel === 'openai' ? 'OpenAI' : 'DeepSeek'} API密钥`);
+                        return false;
+                    }
+                }
+                return true;
+                
+            default:
+                return true;
+        }
+    },
+    
+    // 更新向导步骤
+    updateWizardSteps(targetStep) {
+        for (let i = 1; i <= 5; i++) {
+            const stepEl = document.getElementById('step-' + i);
+            const circleEl = document.getElementById('sc-' + i);
+            const panelEl = document.getElementById('panel-' + i);
+            
+            if (!stepEl || !circleEl || !panelEl) continue;
+            
+            stepEl.classList.remove('active', 'done');
+            panelEl.classList.remove('active');
+            
+            if (i < targetStep) {
+                stepEl.classList.add('done');
+                circleEl.innerHTML = '✓';
+            } else if (i === targetStep) {
+                stepEl.classList.add('active');
+                circleEl.innerHTML = i;
+                panelEl.classList.add('active');
+            } else {
+                circleEl.innerHTML = i;
+            }
+        }
+        
+        // 滚动到顶部
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // 更新最终摘要（如果是最后一步）
+        if (targetStep === 5) {
+            this.updateFinalSummary();
+        }
+    },
+    
+    // 更新最终摘要
+    updateFinalSummary() {
+        document.getElementById('summary-title').textContent = this.configData.novel.title || '未命名';
+        document.getElementById('summary-chapters').textContent = (this.configData.novel.chapters || 10) + '章';
+        
+        const totalWords = (this.configData.novel.chapters || 10) * (this.configData.novel.wordsPerChapter || 3000);
+        document.getElementById('summary-words').textContent = totalWords.toLocaleString() + '字';
+        
+        const modelNames = {
+            'openai': 'OpenAI',
+            'deepseek': 'DeepSeek',
+            'simulated': '模拟模式'
+        };
+        document.getElementById('summary-model').textContent = modelNames[this.configData.model.selected] || '未选择';
+    },
+    
+    // 开始创作
+    startWriting() {
+        // 验证所有配置
+        if (!this.validateStep(this.configData.step)) {
+            // 如果当前不是第5步，跳转到第5步
+            if (this.configData.step !== 5) {
+                this.configData.step = 5;
+                this.updateWizardSteps(5);
+            }
+            return;
+        }
+        
+        console.log('🚀 开始创建小说项目...');
+        console.log('📋 配置数据:', this.configData);
+        
+        // 保存配置到localStorage
+        try {
+            const configToSave = {
+                novel: this.configData.novel,
+                model: this.configData.model,
+                parameters: this.configData.parameters,
+                workflows: this.configData.workflows,
+                characters: this.configData.characters,
+                savedAt: new Date().toISOString()
+            };
+            
+            // 创建小说对象
+            const novelId = 'novel_' + Date.now();
+            const newNovel = {
+                id: novelId,
+                title: this.configData.novel.title,
+                genre: this.configData.novel.genre,
+                description: this.configData.novel.additionalInfo,
+                status: 'writing',
+                wordCount: 0,
+                completedChapters: 0,
+                totalChapters: this.configData.novel.chapters,
+                config: configToSave,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            // 保存配置和小说对象到localStorage
+            localStorage.setItem('geniuswriter_config', JSON.stringify(configToSave));
+            localStorage.setItem('geniuswriter_current_novel', JSON.stringify(newNovel));
+            
+            // 更新小说列表
+            const savedNovels = localStorage.getItem('geniuswriter_novels');
+            let novels = savedNovels ? JSON.parse(savedNovels) : [];
+            novels.unshift(newNovel);
+            localStorage.setItem('geniuswriter_novels', JSON.stringify(novels));
+            
+            console.log('💾 配置和小说对象已保存到localStorage');
+            
+            // 显示成功消息
+            alert(`小说"${this.configData.novel.title}"配置已保存！正在跳转到创作页面...`);
+            
+            // 跳转到新版UI的创作页面
+            setTimeout(() => {
+                window.location.href = '/new?page=writing';
+            }, 1000);
+            
+        } catch (error) {
+            console.error('❌ 保存配置失败:', error);
+            alert('保存配置失败: ' + error.message);
+        }
+    }
+};
+
+// 初始化配置页面
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 新版配置页面加载完成');
+    GeniusWriterConfig.init();
+});
+
+// 导出全局对象
+window.GeniusWriterConfig = GeniusWriterConfig;
+</script>
+
+<style>
+/* 增强样式 */
+.api-key-toggle {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+}
+
+.api-key-toggle:hover {
+    color: var(--ink);
+}
+
+.test-result {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.preset-btn {
+    padding: 8px 16px;
+    background: var(--paper-warm);
+    color: var(--ink-mid);
+    border: 1px solid var(--paper-border);
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.preset-btn:hover {
+    background: var(--paper-mid);
+}
+
+.preset-btn.active {
+    background: var(--gold);
+    color: var(--paper);
+    border-color: var(--gold);
+}
+
+.slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--paper-border);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+    border: none;
+}
+</style>
+{% endblock %}
