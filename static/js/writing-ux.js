@@ -71,6 +71,13 @@ class WritingUX {
                     parameters: config.parameters || {},
                     workflows: config.workflows || {}
                 };
+
+                // 恢复由 config 页面在规划后写入的 novel_id
+                const savedNovelId = localStorage.getItem('geniuswriter_novel_id');
+                if (savedNovelId) {
+                    this.novelData.id = savedNovelId;
+                    console.log('📌 已恢复 novel_id:', savedNovelId);
+                }
                 
                 console.log('📋 配置解析成功:', {
                     title: this.novelData.config.title,

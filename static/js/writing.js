@@ -42,6 +42,12 @@ class WritingPage {
                     model: config.models,
                     agents: config.agents
                 };
+
+                // 从localStorage恢复novel_id（由config页面在规划后写入）
+                const savedNovelId = localStorage.getItem('geniuswriter_novel_id');
+                if (savedNovelId) {
+                    this.novelData.id = savedNovelId;
+                }
                 
                 // 加载或生成章节数据
                 await this.loadChapters();
@@ -893,9 +899,7 @@ class WritingPage {
             // 如果没有，可以调用创建小说时的规划工作流
             const response = await this.apiRequest(`/api/novels/${novelId}/regenerate-outline`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestData)
             }).catch(() => {
                 // 如果端点不存在，尝试使用通用规划

@@ -141,7 +141,7 @@ def initialize_system():
         # 创建模拟实例
         agent_system = GeniusWriterAgentSystem()
         model_clients['openai'] = OpenAIClient()
-        model_clients['deepseek'] = DeepSeekClient()
+        model_clients['deepseek'] = DeepSeekClient(api_key='')  # simulated mode
 
 # 初始化系统
 initialize_system()
@@ -693,6 +693,51 @@ def get_novel_progress(novel_id):
     except Exception as e:
         logger.error(f"获取小说进度失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/novels/<novel_id>/regenerate-outline', methods=['POST'])
+def regenerate_outline(novel_id):
+    """重新生成小说大纲"""
+    try:
+        novel = db_manager.get_novel(novel_id)
+        if not novel:
+            return jsonify({'success': False, 'error': '小说不存在'}), 404
+
+        data = request.json or {}
+
+        if 'novel_planning' in workflows:
+            workflow_data = {
+                'novel_id': novel_id,
+                'title': novel['title'],
+                'genre': novel['genre'],
+                'chapters': novel['chapters_count'],
+                'words_per_chapter': novel['words_per_chapter'],
+                'writing_style': novel.get('writing_style', '通俗性'),
+                'model': data.get('model', novel.get('target_model', 'openai')),
+                'description': novel.get('description', ''),
+            }
+            result = workflows['novel_planning'].execute(workflow_data)
+            result['novel_id'] = novel_id
+            return jsonify(result)
+        else:
+            # 模拟响应
+            chapters = novel['chapters_count']
+            return jsonify({
+                'success': True,
+                'novel_id': novel_id,
+                'outline': {
+                    'summary': f"《{novel['title']}》重新生成的大纲（{novel['genre']}，{chapters}章）",
+                    'chapters': [
+                        {'chapter': i + 1, 'title': f'第{i + 1}章', 'summary': f'第{i + 1}章概要'}
+                        for i in range(chapters)
+                    ],
+                },
+                'message': '大纲重新生成成功',
+            })
+
+    except Exception as e:
+        logger.error(f"重新生成大纲失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/novels/<novel_id>/export', methods=['GET'])
 def export_novel(novel_id):

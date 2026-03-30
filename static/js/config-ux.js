@@ -1004,11 +1004,28 @@ class ConfigUX {
                 workflows: this.configData.workflows
             };
             
-            console.log('📡 模拟API调用...');
-            // 这里应该是实际的API调用
-            // 模拟成功响应
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
+            console.log('📡 调用 /api/novel/plan ...');
+            const planResp = await fetch('/api/novel/plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: this.configData.novel.title,
+                    genre: this.configData.novel.genre,
+                    chapters: this.configData.novel.chapters,
+                    words_per_chapter: this.configData.novel.wordsPerChapter,
+                    writing_style: this.configData.novel.writingStyle || '通俗性',
+                    description: this.configData.novel.additionalInfo || '',
+                    model: this.configData.model.selected || 'openai',
+                })
+            });
+            if (!planResp.ok) throw new Error(`服务器错误 ${planResp.status}`);
+            const planResult = await planResp.json();
+            if (!planResult.success) throw new Error(planResult.error || '规划失败');
+
+            // 持久化 novel_id 供创作页面使用
+            localStorage.setItem('geniuswriter_novel_id', planResult.novel_id);
+            console.log('📌 novel_id 已保存:', planResult.novel_id);
+
             console.log('✅ 小说项目创建成功！');
             this.showSuccess('小说项目创建成功！正在跳转到创作页面...');
             

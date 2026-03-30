@@ -1,390 +1,843 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeniusWriter - AI小说创作平台</title>
-    <link rel="stylesheet" href="/static/css/style-clean.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GeniusWriter — AI 小说创作工坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #FAFAF8;
+  --surface: #FFFFFF;
+  --surface2: #F4F3EF;
+  --border: #E8E6E0;
+  --border2: #D4D1C8;
+  --text: #1A1917;
+  --text2: #6B6860;
+  --text3: #A8A59E;
+  --accent: #1A1917;
+  --acc-inv: #FFFFFF;
+  --green-bg: #EAF3DE;
+  --green-txt: #3B6D11;
+  --amber-bg: #FAEEDA;
+  --amber-txt: #854F0B;
+  --blue-bg: #E6F1FB;
+  --blue-txt: #185FA5;
+  --r-sm: 6px; --r-md: 8px; --r-lg: 12px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  font-size: 14px; line-height: 1.5;
+  height: 100vh; overflow: hidden;
+}
+.app { display: flex; height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 224px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+}
+.sidebar-brand { padding: 20px 16px 14px; border-bottom: 1px solid var(--border); }
+.brand-name { font-size: 15px; font-weight: 500; letter-spacing: -0.2px; }
+.brand-tag {
+  margin-top: 4px; font-size: 11px; color: var(--text3);
+  display: flex; align-items: center; gap: 5px;
+}
+.brand-tag::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--green-txt); display: inline-block;
+}
+.sidebar-nav { flex: 1; padding: 10px 8px; overflow-y: auto; }
+.nav-sec {
+  font-size: 10px; font-weight: 500; color: var(--text3);
+  letter-spacing: 0.7px; text-transform: uppercase;
+  padding: 14px 8px 6px;
+}
+.nav-btn {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 8px 10px;
+  border-radius: var(--r-md); border: none; background: none;
+  font-size: 13.5px; color: var(--text2); cursor: pointer;
+  transition: background .1s, color .1s; text-align: left; font-family: inherit;
+}
+.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn.active { background: var(--surface2); color: var(--text); font-weight: 500; }
+.nav-btn svg { flex-shrink: 0; opacity: .65; }
+.nav-btn.active svg { opacity: 1; }
+.novel-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: var(--r-md);
+  font-size: 12.5px; color: var(--text2); cursor: pointer;
+  border: none; background: none; width: 100%; text-align: left;
+  transition: background .1s; font-family: inherit;
+}
+.novel-btn:hover { background: var(--surface2); }
+.ndot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dg { background: var(--green-txt); }
+.da { background: #BA7517; }
+.db { background: var(--blue-txt); }
+.novel-btn-pct { font-size: 11px; color: var(--text3); margin-left: auto; }
+.sidebar-footer { padding: 10px 8px; border-top: 1px solid var(--border); }
+.new-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 8px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--r-md); font-size: 13px; color: var(--text);
+  cursor: pointer; transition: background .1s; font-family: inherit;
+}
+.new-btn:hover { background: var(--border); }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar {
+  height: 52px; min-height: 52px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 22px; gap: 10px;
+}
+.topbar-title { font-size: 14px; font-weight: 500; flex: 1; }
+.topbar-meta { font-size: 12px; color: var(--text3); }
+.tbtn {
+  padding: 6px 14px; border-radius: var(--r-md);
+  font-size: 12.5px; border: 1px solid var(--border2);
+  background: none; cursor: pointer; color: var(--text2);
+  transition: background .1s; font-family: inherit;
+}
+.tbtn:hover { background: var(--surface2); }
+.tbtn.pri { background: var(--accent); color: var(--acc-inv); border-color: transparent; }
+.tbtn.pri:hover { opacity: .86; }
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 999px; font-size: 11px;
+  background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+}
+
+/* SCREENS */
+.screen { display: none; flex: 1; overflow: hidden; }
+.screen.active { display: flex; }
+
+/* HOME */
+.home-wrap {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px; gap: 32px;
+}
+.home-h {
+  font-size: 24px; font-weight: 500; letter-spacing: -0.4px;
+  margin-bottom: 10px; font-family: 'Noto Serif SC', serif;
+}
+.home-sub { font-size: 14px; color: var(--text2); line-height: 1.7; max-width: 500px; }
+.cards-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px; width: 100%; max-width: 660px;
+}
+.nc {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 16px; cursor: pointer;
+  transition: border-color .15s;
+}
+.nc:hover { border-color: var(--border2); }
+.nc-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.nc-meta { font-size: 11.5px; color: var(--text3); }
+.nc-bar { margin-top: 12px; height: 3px; background: var(--surface2); border-radius: 2px; }
+.nc-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+.add-card {
+  background: var(--surface2); border: 1px dashed var(--border2);
+  border-radius: var(--r-lg); padding: 16px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; color: var(--text2); font-size: 13px; cursor: pointer;
+  transition: all .12s;
+}
+.add-card:hover { border-color: var(--text3); color: var(--text); }
+
+/* CONFIG */
+.config-wrap { flex: 1; display: flex; overflow: hidden; }
+.wizard-panel {
+  width: 320px; min-width: 320px;
+  background: var(--surface); border-right: 1px solid var(--border);
+  overflow-y: auto; padding: 22px 18px;
+  display: flex; flex-direction: column;
+}
+.step-track { display: flex; align-items: center; margin-bottom: 6px; }
+.sdot {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; flex-shrink: 0; cursor: pointer;
+  transition: all .15s;
+}
+.sdot.done { background: var(--accent); color: var(--acc-inv); }
+.sdot.active { background: var(--surface2); border: 2px solid var(--accent); color: var(--accent); }
+.sdot.idle { background: var(--surface2); border: 1px solid var(--border2); color: var(--text3); }
+.sline { flex: 1; height: 1px; background: var(--border); }
+.sline.done { background: var(--accent); }
+.step-sublabels {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--text3); margin-bottom: 22px;
+}
+.ssl { width: 24px; text-align: center; }
+.ssl.active { color: var(--text); font-weight: 500; }
+.fg { margin-bottom: 16px; }
+.flabel { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+.fi {
+  width: 100%; padding: 8px 10px; font-size: 13px;
+  border: 1px solid var(--border2); border-radius: var(--r-md);
+  background: var(--surface); color: var(--text); outline: none; font-family: inherit;
+}
+.fi:focus { border-color: var(--text3); }
+.fta {
+  width: 100%; padding: 9px 10px; font-size: 13px;
+  border: 1px solid var(--border2); border-radius: var(--r-md);
+  background: var(--surface); color: var(--text);
+  resize: vertical; min-height: 80px; font-family: inherit; outline: none; line-height: 1.6;
+}
+.fta:focus { border-color: var(--text3); }
+.gg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.gchip {
+  padding: 7px 4px; text-align: center; font-size: 12px;
+  border: 1px solid var(--border2); border-radius: var(--r-md);
+  cursor: pointer; color: var(--text2); background: none;
+  transition: all .1s; font-family: inherit;
+}
+.gchip:hover { border-color: var(--text3); color: var(--text); }
+.gchip.sel { background: var(--accent); color: var(--acc-inv); border-color: transparent; }
+.sopts { display: flex; flex-direction: column; gap: 6px; }
+.sopt {
+  padding: 9px 12px; text-align: left; font-size: 12.5px;
+  border: 1px solid var(--border2); border-radius: var(--r-md);
+  cursor: pointer; color: var(--text2); background: none;
+  transition: all .1s; width: 100%; font-family: inherit;
+}
+.sopt:hover { border-color: var(--text3); }
+.sopt.sel { border: 2px solid var(--accent); color: var(--text); background: var(--surface2); }
+.sopt-main { font-weight: 500; font-size: 13px; }
+.sopt-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.range-row { display: flex; align-items: center; gap: 10px; }
+.range-row input[type=range] { flex: 1; }
+.rv { font-size: 13px; font-weight: 500; min-width: 44px; text-align: right; }
+.pbox { background: var(--surface2); border-radius: var(--r-md); padding: 12px 14px; margin-top: 4px; }
+.pbox-num { font-size: 22px; font-weight: 500; }
+.pbox-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.mopts { display: flex; flex-direction: column; gap: 7px; }
+.mopt {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-radius: var(--r-md);
+  border: 1px solid var(--border2); cursor: pointer;
+  background: none; width: 100%; text-align: left; font-family: inherit;
+  transition: border-color .1s;
+}
+.mopt:hover { border-color: var(--text3); }
+.mopt.sel { border: 2px solid var(--accent); background: var(--surface2); }
+.mopt-name { font-size: 13px; font-weight: 500; }
+.mopt-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.mopt-badge { padding: 2px 8px; border-radius: 999px; font-size: 10px; background: var(--blue-bg); color: var(--blue-txt); }
+.wfooter { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+.wbtn { flex: 1; padding: 10px; font-size: 13px; border-radius: var(--r-md); cursor: pointer; font-family: inherit; }
+.wbtn.sec { border: 1px solid var(--border2); background: none; color: var(--text2); }
+.wbtn.sec:hover { background: var(--surface2); }
+.wbtn.pri { background: var(--accent); color: var(--acc-inv); border: none; }
+.wbtn.pri:hover { opacity: .86; }
+.config-preview { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+
+/* CARDS & SHARED */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); }
+.card-header {
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.card-title { font-size: 13.5px; font-weight: 500; flex: 1; }
+.ch-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background .1s;
+}
+.ch-row:last-child { border-bottom: none; }
+.ch-row:hover { background: var(--surface2); }
+.ch-row.active { background: var(--surface2); }
+.ch-num { font-size: 11px; color: var(--text3); font-weight: 500; min-width: 22px; }
+.ch-info { flex: 1; }
+.ch-name { font-size: 13px; }
+.ch-sum { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.chs { font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 500; white-space: nowrap; }
+.cs-done { background: var(--green-bg); color: var(--green-txt); }
+.cs-writing { background: var(--amber-bg); color: var(--amber-txt); }
+.cs-todo { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.prog { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px; }
+.prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.prog-title { font-size: 13px; font-weight: 500; }
+.prog-pct { font-size: 13px; color: var(--text2); }
+.prog-track { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width .5s ease; }
+.prog-stats { display: flex; gap: 24px; margin-top: 12px; }
+.ps-val { font-size: 18px; font-weight: 500; }
+.ps-lbl { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.agents-strip {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.agents-lbl { font-size: 11.5px; color: var(--text3); white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 999px; font-size: 11px;
+  border: 1px solid var(--border); color: var(--text2);
+}
+.chip.on { background: var(--green-bg); color: var(--green-txt); border-color: #97C459; }
+.chipdot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: blink 1.4s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+/* WRITING */
+.writing-wrap { flex: 1; display: flex; overflow: hidden; }
+.ch-list {
+  width: 250px; min-width: 250px;
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ch-list-hdr { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 500; color: var(--text2); }
+.ch-list-body { flex: 1; overflow-y: auto; }
+.ch-list-ftr { padding: 10px; border-top: 1px solid var(--border); }
+.workspace { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.chv { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+.chv-hdr { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
+.chv-title { font-size: 15px; font-weight: 500; font-family: 'Noto Serif SC', serif; flex: 1; }
+.chv-meta { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.chv-body { padding: 20px 22px; font-size: 14px; color: var(--text2); line-height: 2; min-height: 200px; font-family: 'Noto Serif SC', Georgia, serif; }
+.chv-ph { font-size: 13px; color: var(--text3); font-style: italic; font-family: 'Inter', sans-serif; }
+
+/* RIGHT PANEL */
+.rp {
+  width: 330px; min-width: 330px;
+  background: var(--surface); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.rtabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 14px; }
+.rtab {
+  font-size: 12px; padding: 11px 14px;
+  border-bottom: 2px solid transparent; cursor: pointer; color: var(--text3);
+  background: none; border-left: none; border-right: none; border-top: none;
+  transition: color .1s; font-family: inherit;
+}
+.rtab.active { color: var(--text); border-bottom-color: var(--accent); }
+.rtab:hover:not(.active) { color: var(--text2); }
+.rp-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.tp { display: none; flex-direction: column; gap: 14px; }
+.tp.active { display: flex; }
+.rlbl { font-size: 11px; color: var(--text3); margin-bottom: 5px; }
+.rtext { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.rdiv { height: 1px; background: var(--border); }
+.gen-btn {
+  width: 100%; padding: 11px;
+  background: var(--accent); color: var(--acc-inv);
+  border: none; border-radius: var(--r-md);
+  font-size: 13.5px; font-weight: 500; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: inherit; transition: opacity .12s;
+}
+.gen-btn:hover { opacity: .86; }
+.gen-btn:disabled { opacity: .4; cursor: not-allowed; }
+.mr { display: flex; align-items: center; gap: 8px; }
+.mr label { font-size: 12px; color: var(--text2); flex: 1; }
+.mr input[type=range] { flex: 1; }
+.mrv { font-size: 12px; font-weight: 500; min-width: 34px; text-align: right; }
+.char-card { padding: 11px 12px; border: 1px solid var(--border); border-radius: var(--r-md); }
+.char-name { font-size: 13px; font-weight: 500; }
+.char-role { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.char-desc { font-size: 12px; color: var(--text2); margin-top: 7px; line-height: 1.5; }
+.log-wrap { border-top: 1px solid var(--border); max-height: 170px; overflow-y: auto; padding: 10px 14px; }
+.log-hdr { font-size: 11px; font-weight: 500; color: var(--text3); margin-bottom: 7px; }
+.lentry {
+  font-size: 11px; color: var(--text2); padding: 4px 0;
+  display: flex; gap: 8px; align-items: baseline;
+  border-bottom: 1px solid var(--border); line-height: 1.4;
+}
+.lentry:last-child { border-bottom: none; }
+.lt { color: var(--text3); flex-shrink: 0; }
+.la { color: var(--blue-txt); }
+.chkrow { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text2); cursor: pointer; }
+.chkrow input { width: 14px; height: 14px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid transparent; border-top-color: currentColor;
+  animation: spin .75s linear infinite;
+}
+</style>
 </head>
 <body>
-    <!-- 导航栏 -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="/" class="navbar-logo">
-                <i class="fas fa-book-open navbar-logo-icon"></i>
-                <span>GeniusWriter</span>
-            </a>
-            <div class="navbar-nav">
-                <a href="/" class="nav-link active">
-                    <i class="fas fa-home"></i>
-                    <span class="sm-hidden">首页</span>
-                </a>
-                <a href="/config" class="nav-link">
-                    <i class="fas fa-cog"></i>
-                    <span class="sm-hidden">配置</span>
-                </a>
-                <a href="/writing" class="nav-link">
-                    <i class="fas fa-pen"></i>
-                    <span class="sm-hidden">创作</span>
-                </a>
-                <a href="#" id="agent-toggle" class="nav-link">
-                    <i class="fas fa-robot"></i>
-                    <span class="sm-hidden">智能体</span>
-                </a>
-            </div>
-        </div>
-    </nav>
+<div class="app" id="app">
 
-    <!-- 智能体面板（默认隐藏） -->
-    <div id="agent-panel" class="agent-panel hidden">
-        <div class="card">
-            <div class="card-header">
-                <div class="flex items-center justify-between">
-                    <h3 class="mb-0">
-                        <i class="fas fa-users mr-2"></i>
-                        智能体协调系统
-                    </h3>
-                    <button id="close-panel" class="btn btn-icon">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="space-y-6">
-                    <div class="agent-tier">
-                        <h4 class="flex items-center">
-                            <i class="fas fa-crown mr-2"></i>
-                            总监层 (Tier 1)
-                        </h4>
-                        <div class="features-grid mt-4" id="tier1-agents">
-                            <!-- 通过JS动态加载 -->
-                        </div>
-                    </div>
-                    <div class="agent-tier">
-                        <h4 class="flex items-center">
-                            <i class="fas fa-user-tie mr-2"></i>
-                            部门主管层 (Tier 2)
-                        </h4>
-                        <div class="features-grid mt-4" id="tier2-agents">
-                            <!-- 通过JS动态加载 -->
-                        </div>
-                    </div>
-                    <div class="agent-tier">
-                        <h4 class="flex items-center">
-                            <i class="fas fa-user-graduate mr-2"></i>
-                            专家层 (Tier 3)
-                        </h4>
-                        <div class="features-grid mt-4" id="tier3-agents">
-                            <!-- 通过JS动态加载 -->
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">GeniusWriter</div>
+      <div class="brand-tag">AI 小说创作工坊</div>
+    </div>
+    <div class="sidebar-nav">
+      <button class="nav-btn active" onclick="go('home')">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 6.5L8 2l6 4.5V14H2V6.5z"/><rect x="5.5" y="9" width="2" height="5"/>
+        </svg>工作台
+      </button>
+      <button class="nav-btn" onclick="go('config')">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/>
+        </svg>新建创作
+      </button>
+      <div class="nav-sec">最近项目</div>
+      <button class="novel-btn" onclick="go('writing')">
+        <div class="ndot da"></div>长夜将至<span class="novel-btn-pct">35%</span>
+      </button>
+      <button class="novel-btn">
+        <div class="ndot dg"></div>星际流浪者<span class="novel-btn-pct">40%</span>
+      </button>
+      <button class="novel-btn">
+        <div class="ndot db"></div>红尘旧事<span class="novel-btn-pct">100%</span>
+      </button>
+      <div class="nav-sec">工具</div>
+      <button class="nav-btn">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M5 7h6M5 10h4"/>
+        </svg>我的作品
+      </button>
+      <button class="nav-btn">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="6" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
+        </svg>代理系统
+      </button>
+    </div>
+    <div class="sidebar-footer">
+      <button class="new-btn" onclick="go('config')">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+        新建小说
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- HOME SCREEN -->
+    <div class="screen active" id="sc-home" style="flex-direction:column;">
+      <div class="topbar">
+        <div class="topbar-title">工作台</div>
+        <div class="topbar-meta">3 个项目 · 今日创作 1,820 字</div>
+        <button class="tbtn pri" onclick="go('config')">+ 新建小说</button>
+      </div>
+      <div class="home-wrap">
+        <div style="text-align:center;max-width:520px">
+          <div class="home-h">你的下一部小说，从这里开始</div>
+          <div class="home-sub">36 个专业 AI 代理协同，覆盖历史、科幻、奇幻、都市、悬疑五大体裁。从世界观设定到最终润色，全程陪伴创作。</div>
         </div>
+        <div class="cards-grid">
+          <div class="nc" onclick="go('writing')">
+            <div class="nc-title">长夜将至</div>
+            <div class="nc-meta">奇幻 · 第 7 / 20 章 · 28,400 字</div>
+            <div class="nc-bar"><div class="nc-fill" style="width:35%"></div></div>
+          </div>
+          <div class="nc">
+            <div class="nc-title">星际流浪者</div>
+            <div class="nc-meta">科幻 · 第 12 / 30 章 · 61,000 字</div>
+            <div class="nc-bar"><div class="nc-fill" style="width:40%"></div></div>
+          </div>
+          <div class="nc">
+            <div class="nc-title">红尘旧事</div>
+            <div class="nc-meta">历史 · 已完成 · 120,000 字</div>
+            <div class="nc-bar"><div class="nc-fill" style="width:100%"></div></div>
+          </div>
+          <div class="add-card" onclick="go('config')">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+            开始新项目
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- 主内容 -->
-    <main class="main-content">
-        <div class="container">
-            <!-- 英雄区域 -->
-            <section class="hero">
-                <div class="hero-content fade-in">
-                    <h1 class="hero-title">
-                        开启AI小说创作之旅
-                    </h1>
-                    <p class="hero-description lead">
-                        基于Claude Game Studios架构，GeniusWriter采用三级智能体协调系统，
-                        为您的创作提供专业级的AI协作支持。
-                    </p>
-                    
-                    <div class="hero-stats">
-                        <div class="stat-card">
-                            <i class="fas fa-robot stat-icon"></i>
-                            <div class="stat-number" id="agent-count">36</div>
-                            <div class="stat-label">专业代理</div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-tools stat-icon"></i>
-                            <div class="stat-number" id="skill-count">28</div>
-                            <div class="stat-label">工作流技能</div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-brain stat-icon"></i>
-                            <div class="stat-number" id="model-count">4</div>
-                            <div class="stat-label">大模型支持</div>
-                        </div>
-                    </div>
-                    
-                    <div class="hero-actions">
-                        <a href="/config" class="btn btn-primary btn-lg">
-                            <i class="fas fa-play-circle mr-2"></i>
-                            开始创作
-                        </a>
-                        <a href="#" id="demo-btn" class="btn btn-secondary btn-lg">
-                            <i class="fas fa-eye mr-2"></i>
-                            查看演示
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="hero-visual fade-in">
-                    <div class="hero-illustration">
-                        <i class="fas fa-book"></i>
-                        <i class="fas fa-pen-nib"></i>
-                        <i class="fas fa-lightbulb"></i>
-                    </div>
-                </div>
-            </section>
+    <!-- CONFIG SCREEN -->
+    <div class="screen" id="sc-config" style="flex-direction:column;">
+      <div class="topbar">
+        <button class="tbtn" onclick="go('home')">← 返回</button>
+        <div class="topbar-title">新建小说</div>
+        <div class="topbar-meta" id="step-top">步骤 1 / 4 · 基本信息</div>
+      </div>
+      <div class="config-wrap">
+        <div class="wizard-panel">
+          <div class="step-track">
+            <div class="sdot done" id="sd1">1</div><div class="sline" id="sl1"></div>
+            <div class="sdot idle" id="sd2">2</div><div class="sline" id="sl2"></div>
+            <div class="sdot idle" id="sd3">3</div><div class="sline" id="sl3"></div>
+            <div class="sdot idle" id="sd4">4</div>
+          </div>
+          <div class="step-sublabels">
+            <span class="ssl active" id="ssl1">基本</span>
+            <span class="ssl" id="ssl2">体裁</span>
+            <span class="ssl" id="ssl3">结构</span>
+            <span class="ssl" id="ssl4">模型</span>
+          </div>
 
-            <!-- 核心功能 -->
-            <section class="section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        核心功能
-                    </h2>
-                    <p class="section-description">
-                        GeniusWriter提供全方位的AI小说创作支持，从大纲规划到章节创作，全程智能辅助
-                    </p>
-                </div>
-                
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-sliders-h"></i>
-                        </div>
-                        <h3 class="feature-title">智能配置</h3>
-                        <p class="feature-description">
-                            自定义小说主题、章节结构、字数要求，灵活配置大模型参数。
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-sitemap"></i>
-                        </div>
-                        <h3 class="feature-title">三级代理架构</h3>
-                        <p class="feature-description">
-                            总监层、部门主管层、专家层三级智能体协同工作，专业分工明确。
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                        <h3 class="feature-title">多模型支持</h3>
-                        <p class="feature-description">
-                            支持OpenAI、DeepSeek等多种大模型，根据需求灵活切换。
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h3 class="feature-title">创作进度可视化</h3>
-                        <p class="feature-description">
-                            实时查看创作进度，章节完成情况一目了然。
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-file-export"></i>
-                        </div>
-                        <h3 class="feature-title">多格式导出</h3>
-                        <p class="feature-description">
-                            支持Markdown、Word、PDF等多种格式导出，方便分享和出版。
-                        </p>
-                    </div>
-                    
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-history"></i>
-                        </div>
-                        <h3 class="feature-title">版本管理</h3>
-                        <p class="feature-description">
-                            完整的创作历史记录，支持版本对比和恢复。
-                        </p>
-                    </div>
-                </div>
-            </section>
+          <div id="step1">
+            <div class="fg"><label class="flabel">小说标题</label><input class="fi" placeholder="给你的故事起个名字…" id="inp-title" oninput="updPrev()" /></div>
+            <div class="fg"><label class="flabel">作者</label><input class="fi" placeholder="笔名或真名" value="匿名" /></div>
+            <div class="fg"><label class="flabel">故事简介</label><textarea class="fta" placeholder="主角是谁？面临什么困境？故事走向大致如何…"></textarea></div>
+            <div class="fg"><label class="flabel">核心主题（可选）</label><input class="fi" placeholder="例如：权力、救赎、成长…" /></div>
+          </div>
 
-            <!-- 创作流程 -->
-            <section class="section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        创作流程
-                    </h2>
-                    <p class="section-description">
-                        从构思到完成，五步实现专业级小说创作
-                    </p>
-                </div>
-                
-                <div class="workflow-steps">
-                    <div class="workflow-step">
-                        <div class="step-number">1</div>
-                        <h3 class="step-title">配置小说</h3>
-                        <p class="step-description">设置主题、章节、字数等基本参数</p>
-                    </div>
-                    
-                    <div class="workflow-connector"></div>
-                    
-                    <div class="workflow-step">
-                        <div class="step-number">2</div>
-                        <h3 class="step-title">生成大纲</h3>
-                        <p class="step-description">智能体协作生成完整小说大纲</p>
-                    </div>
-                    
-                    <div class="workflow-connector"></div>
-                    
-                    <div class="workflow-step">
-                        <div class="step-number">3</div>
-                        <h3 class="step-title">章节创作</h3>
-                        <p class="step-description">专家代理逐章创作内容</p>
-                    </div>
-                    
-                    <div class="workflow-connector"></div>
-                    
-                    <div class="workflow-step">
-                        <div class="step-number">4</div>
-                        <h3 class="step-title">审阅优化</h3>
-                        <p class="step-description">文学总监审核，优化文本质量</p>
-                    </div>
-                    
-                    <div class="workflow-connector"></div>
-                    
-                    <div class="workflow-step">
-                        <div class="step-number">5</div>
-                        <h3 class="step-title">导出分享</h3>
-                        <p class="step-description">多种格式导出，完成创作</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 快速开始 -->
-            <section class="quick-start">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        快速开始
-                    </h2>
-                    <p class="section-description">
-                        只需三步，立即开启AI小说创作之旅
-                    </p>
-                </div>
-                
-                <div class="quick-start-content">
-                    <div class="instructions">
-                        <div class="instruction">
-                            <div class="instruction-icon">
-                                <i class="fas fa-key"></i>
-                            </div>
-                            <div class="instruction-content">
-                                <h4 class="instruction-title">1. 配置API密钥</h4>
-                                <p class="instruction-description">
-                                    在配置页面设置您的大模型API密钥，支持OpenAI、DeepSeek等主流模型。
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div class="instruction">
-                            <div class="instruction-icon">
-                                <i class="fas fa-book"></i>
-                            </div>
-                            <div class="instruction-content">
-                                <h4 class="instruction-title">2. 创建新项目</h4>
-                                <p class="instruction-description">
-                                    设置小说主题、章节数量和目标字数，智能体将根据需求生成详细大纲。
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div class="instruction">
-                            <div class="instruction-icon">
-                                <i class="fas fa-play"></i>
-                            </div>
-                            <div class="instruction-content">
-                                <h4 class="instruction-title">3. 开始创作</h4>
-                                <p class="instruction-description">
-                                    启动智能体系统，自动生成小说内容，实时查看创作进度和优化建议。
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="cta-box">
-                        <h3 class="cta-title">准备好开始了吗？</h3>
-                        <p class="cta-description">
-                            立即体验AI协作创作的魅力，创作属于您的专业级小说
-                        </p>
-                        <a href="/config" class="btn cta-button btn-lg">
-                            <i class="fas fa-play mr-2"></i>
-                            立即开始
-                        </a>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <!-- 页脚 -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4 class="footer-title">
-                        GeniusWriter
-                    </h4>
-                    <p class="text-sm">
-                        新一代AI小说创作平台
-                    </p>
-                </div>
-                
-                <div class="footer-section">
-                    <h4 class="footer-title">技术栈</h4>
-                    <ul class="footer-links">
-                        <li><a href="#" class="footer-link">Flask + Python</a></li>
-                        <li><a href="#" class="footer-link">三级智能体架构</a></li>
-                        <li><a href="#" class="footer-link">多模型API集成</a></li>
-                        <li><a href="#" class="footer-link">响应式Web界面</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4 class="footer-title">快速链接</h4>
-                    <ul class="footer-links">
-                        <li><a href="/" class="footer-link">首页</a></li>
-                        <li><a href="/config" class="footer-link">配置</a></li>
-                        <li><a href="/writing" class="footer-link">创作</a></li>
-                        <li><a href="#" id="api-docs" class="footer-link">API文档</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4 class="footer-title">系统状态</h4>
-                    <div class="flex items-center mb-2">
-                        <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                        <span class="text-sm">系统运行正常</span>
-                    </div>
-                    <div id="system-status" class="text-sm text-gray-400">
-                        正在检查系统状态...
-                    </div>
-                </div>
+          <div id="step2" style="display:none">
+            <div class="fg">
+              <label class="flabel">选择体裁</label>
+              <div class="gg">
+                <button class="gchip sel" onclick="selG(this)">奇幻</button>
+                <button class="gchip" onclick="selG(this)">历史</button>
+                <button class="gchip" onclick="selG(this)">科幻</button>
+                <button class="gchip" onclick="selG(this)">都市</button>
+                <button class="gchip" onclick="selG(this)">悬疑</button>
+                <button class="gchip" onclick="selG(this)">武侠</button>
+                <button class="gchip" onclick="selG(this)">言情</button>
+                <button class="gchip" onclick="selG(this)">玄幻</button>
+                <button class="gchip" onclick="selG(this)">军事</button>
+              </div>
             </div>
-            
-            <div class="footer-bottom">
-                <p class="text-sm">
-                    &copy; 2026 GeniusWriter - AI小说创作平台
-                </p>
+            <div class="fg" style="margin-top:18px">
+              <label class="flabel">写作风格</label>
+              <div class="sopts">
+                <button class="sopt sel" onclick="selS(this)"><div class="sopt-main">网络文学</div><div class="sopt-sub">节奏快，情节紧凑，强调爽点</div></button>
+                <button class="sopt" onclick="selS(this)"><div class="sopt-main">文学性</div><div class="sopt-sub">注重语言质感与人物内心</div></button>
+                <button class="sopt" onclick="selS(this)"><div class="sopt-main">通俗性</div><div class="sopt-sub">故事性强，易读易懂</div></button>
+              </div>
             </div>
-        </div>
-    </footer>
+          </div>
 
-    <!-- JavaScript -->
-    <script src="/static/js/app.js"></script>
+          <div id="step3" style="display:none">
+            <div class="fg">
+              <label class="flabel">章节数量</label>
+              <div class="range-row">
+                <input type="range" min="5" max="100" value="20" id="rng-ch" oninput="document.getElementById('v-ch').textContent=this.value+'章';calcTotal();" />
+                <span class="rv" id="v-ch">20 章</span>
+              </div>
+            </div>
+            <div class="fg">
+              <label class="flabel">每章字数目标</label>
+              <div class="range-row">
+                <input type="range" min="1000" max="8000" step="500" value="3000" id="rng-wpc" oninput="document.getElementById('v-wpc').textContent=(this.value/1000).toFixed(1)+'k 字';calcTotal();" />
+                <span class="rv" id="v-wpc">3.0k 字</span>
+              </div>
+            </div>
+            <div class="pbox"><div class="pbox-num" id="total-p">60,000 字</div><div class="pbox-lbl">预计总字数 · 中篇小说体量</div></div>
+            <div class="fg" style="margin-top:18px">
+              <label class="flabel">启用的代理层级</label>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+                <label class="chkrow"><input type="checkbox" checked /> 总监层（创意总监、文学总监）</label>
+                <label class="chkrow"><input type="checkbox" checked /> 部门主管（情节、人物、世界观）</label>
+                <label class="chkrow"><input type="checkbox" checked /> 专家层（体裁专家、对话、场景等）</label>
+              </div>
+            </div>
+          </div>
+
+          <div id="step4" style="display:none">
+            <div class="fg">
+              <label class="flabel">选择 AI 模型</label>
+              <div class="mopts">
+                <button class="mopt sel" onclick="selM(this)">
+                  <div><div class="mopt-name">DeepSeek</div><div class="mopt-desc">中文创作首选，性价比最高</div></div>
+                  <span class="mopt-badge">推荐</span>
+                </button>
+                <button class="mopt" onclick="selM(this)">
+                  <div><div class="mopt-name">GPT-4o</div><div class="mopt-desc">综合能力强，创意表达出色</div></div>
+                </button>
+                <button class="mopt" onclick="selM(this)">
+                  <div><div class="mopt-name">Claude</div><div class="mopt-desc">长文本、逻辑严谨，适合严肃文学</div></div>
+                </button>
+              </div>
+            </div>
+            <div class="fg">
+              <label class="flabel">创造力（Temperature）</label>
+              <div class="range-row">
+                <input type="range" min="1" max="10" value="7" oninput="this.nextElementSibling.textContent=(this.value/10).toFixed(1)" />
+                <span class="rv">0.7</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:5px"><span>保守稳定</span><span>创意发散</span></div>
+            </div>
+            <div class="fg"><label class="flabel">API 密钥（可选）</label><input class="fi" type="password" placeholder="sk-… 留空使用环境变量" /></div>
+          </div>
+
+          <div class="wfooter">
+            <button class="wbtn sec" id="btn-prev" onclick="sNav(-1)" style="display:none">← 上一步</button>
+            <button class="wbtn pri" id="btn-next" onclick="sNav(1)">下一步 →</button>
+          </div>
+        </div>
+
+        <div class="config-preview">
+          <div class="prog" id="prev-meta">
+            <div style="font-size:15px;font-weight:500;margin-bottom:8px;font-family:'Noto Serif SC',serif" id="prev-title">未命名小说</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px" id="prev-tags">
+              <span class="tag">奇幻</span><span class="tag">网络文学</span><span class="tag">20 章</span><span class="tag">60,000 字</span><span class="tag">DeepSeek</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">自动生成的章节大纲预览</div><span class="tag" style="font-size:10px">AI 预生成</span></div>
+            <div>
+              <div class="ch-row"><div class="ch-num">01</div><div class="ch-info"><div class="ch-name">开端 — 世界与主角登场</div><div class="ch-sum">建立世界观，引入核心矛盾，定下基调</div></div><div class="chs cs-todo">待创作</div></div>
+              <div class="ch-row"><div class="ch-num">02</div><div class="ch-info"><div class="ch-name">第一道门 — 跨越边界</div><div class="ch-sum">主角踏出舒适区，故事正式展开</div></div><div class="chs cs-todo">待创作</div></div>
+              <div class="ch-row" style="opacity:.4"><div class="ch-num">…</div><div class="ch-info"><div class="ch-name">更多章节在创建后自动生成</div></div></div>
+            </div>
+          </div>
+          <div class="agents-strip">
+            <div class="agents-lbl">将调用的代理</div>
+            <div class="chips">
+              <div class="chip">创意总监</div><div class="chip">情节设计师</div><div class="chip">世界观设计师</div><div class="chip">奇幻专家</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WRITING SCREEN -->
+    <div class="screen" id="sc-writing" style="flex-direction:column;">
+      <div class="topbar">
+        <button class="tbtn" onclick="go('home')">← 返回</button>
+        <div class="topbar-title">长夜将至</div>
+        <span class="tag">奇幻 · DeepSeek</span>
+        <div style="flex:1"></div>
+        <button class="tbtn">导出</button>
+        <button class="tbtn pri" onclick="startGen()">生成当前章节</button>
+      </div>
+      <div class="writing-wrap">
+        <div class="ch-list">
+          <div class="ch-list-hdr">章节列表</div>
+          <div class="ch-list-body">
+            <div class="ch-row" onclick="selCh(this,1,'开端','3,280 字',true)"><div class="ch-num">01</div><div class="ch-info"><div class="ch-name">开端</div></div><div class="chs cs-done">已完成</div></div>
+            <div class="ch-row" onclick="selCh(this,2,'初遇','3,100 字',true)"><div class="ch-num">02</div><div class="ch-info"><div class="ch-name">初遇</div></div><div class="chs cs-done">已完成</div></div>
+            <div class="ch-row active" onclick="selCh(this,3,'暗流','1,240 / 3,000 字',false)"><div class="ch-num">03</div><div class="ch-info"><div class="ch-name">暗流</div></div><div class="chs cs-writing">创作中</div></div>
+            <div class="ch-row" onclick="selCh(this,4,'入局','— / 3,000 字',false)"><div class="ch-num">04</div><div class="ch-info"><div class="ch-name">入局</div></div><div class="chs cs-todo">待创作</div></div>
+            <div class="ch-row" onclick="selCh(this,5,'背叛','— / 3,000 字',false)"><div class="ch-num">05</div><div class="ch-info"><div class="ch-name">背叛</div></div><div class="chs cs-todo">待创作</div></div>
+            <div class="ch-row" style="opacity:.5"><div class="ch-num">06</div><div class="ch-info"><div class="ch-name">转机</div></div><div class="chs cs-todo">待创作</div></div>
+            <div class="ch-row" style="opacity:.35"><div class="ch-num">07</div><div class="ch-info"><div class="ch-name">决战</div></div><div class="chs cs-todo">待创作</div></div>
+          </div>
+          <div class="ch-list-ftr">
+            <div class="prog" style="padding:12px">
+              <div class="prog-header"><div class="prog-title" style="font-size:12px">总进度</div><div class="prog-pct" style="font-size:12px">35%</div></div>
+              <div class="prog-track"><div class="prog-fill" style="width:35%"></div></div>
+              <div class="prog-stats" style="margin-top:10px;gap:16px">
+                <div><div class="ps-val" style="font-size:15px">28,400</div><div class="ps-lbl">总字数</div></div>
+                <div><div class="ps-val" style="font-size:15px">7/20</div><div class="ps-lbl">章节完成</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="workspace">
+          <div class="agents-strip">
+            <div class="agents-lbl">代理状态</div>
+            <div class="chips" id="a-chips">
+              <div class="chip on"><div class="chipdot"></div>情节设计师</div>
+              <div class="chip on"><div class="chipdot"></div>奇幻专家</div>
+              <div class="chip">对话专家</div>
+              <div class="chip">场景专家</div>
+              <div class="chip">文笔编辑</div>
+            </div>
+          </div>
+          <div class="chv">
+            <div class="chv-hdr">
+              <div>
+                <div class="chv-title" id="chv-title">第 3 章 · 暗流</div>
+                <div class="chv-meta" id="chv-meta">目标字数 3,000 · 已生成 1,240 字</div>
+              </div>
+              <div><span class="chs cs-writing" id="chv-status">创作中</span></div>
+            </div>
+            <div class="chv-body" id="chv-body">
+              城中的第七口枯井让江凌起了疑心。<br><br>
+              那口井已经干涸了五年，街坊邻里早就习惯了绕路走，可今天清晨，一个卖豆腐的老汉却在井边发现了一滩猩红——不是血，是某种更黏稠、更深沉的东西，带着一丝隐约的腥甜气。<br><br>
+              他蹲下身，用拇指蹭了一点，凑到鼻尖。手臂上的铜环瞬间发热，像是有什么东西被触动了。<br><br>
+              <span class="chv-ph">— AI 正在续写中 —</span>
+            </div>
+          </div>
+          <div class="prog">
+            <div class="prog-header"><div class="prog-title">本章进度</div><div class="prog-pct" id="chpct">41%</div></div>
+            <div class="prog-track"><div class="prog-fill" id="chfill" style="width:41%"></div></div>
+          </div>
+        </div>
+
+        <div class="rp">
+          <div class="rtabs">
+            <button class="rtab active" onclick="switchT(this,'tp-gen')">生成设置</button>
+            <button class="rtab" onclick="switchT(this,'tp-outline')">章节大纲</button>
+            <button class="rtab" onclick="switchT(this,'tp-char')">人物档案</button>
+          </div>
+          <div class="rp-body">
+            <div class="tp active" id="tp-gen">
+              <div><div class="rlbl">当前章节概要</div><div class="rtext" id="ch-sum-text">城中接连发生怪事，江凌开始调查，却发现幕后势力比想象中庞大。</div></div>
+              <div class="rdiv"></div>
+              <div><div class="rlbl">创作指引（可选）</div><textarea class="fta" style="background:var(--surface2)" placeholder="对本章有特别要求吗？比如"多一些环境描写""结尾设置悬念"…"></textarea></div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div class="mr"><label>创造力</label><input type="range" min="1" max="10" value="7" oninput="this.nextElementSibling.textContent=(this.value/10).toFixed(1)" /><div class="mrv">0.7</div></div>
+                <div class="mr"><label>目标字数</label><input type="range" min="1000" max="8000" step="500" value="3000" oninput="this.nextElementSibling.textContent=(this.value/1000).toFixed(1)+'k'" /><div class="mrv">3.0k</div></div>
+              </div>
+              <button class="gen-btn" id="gen-btn" onclick="startGen()">
+                <span id="gen-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2l2 4h4l-3.3 2.4 1.3 4L8 10.2 4 12.4l1.3-4L2 6h4z"/></svg></span>
+                <span id="gen-text">开始生成本章</span>
+              </button>
+              <div style="display:flex;gap:8px">
+                <button class="tbtn" style="flex:1;font-size:12px;padding:7px">重新生成</button>
+                <button class="tbtn" style="flex:1;font-size:12px;padding:7px">续写</button>
+              </div>
+            </div>
+            <div class="tp" id="tp-outline">
+              <div><div class="rlbl">第 3 章大纲</div><textarea class="fta" style="min-height:220px">城中第七口枯井出现异常，引发江凌注意。
+
+调查过程中发现规律——每隔三天、子时前后，城东某固定区域出现能量波动。
+
+追踪至废弃织布坊，与守卫冲突。
+
+章节末尾：发现"夜祭"符文，与传说中的黑暗组织相关联。</textarea></div>
+              <button class="gen-btn" style="background:var(--surface2);color:var(--text);border:1px solid var(--border2)">依据大纲重新生成</button>
+            </div>
+            <div class="tp" id="tp-char">
+              <div class="char-card"><div class="char-name">江凌</div><div class="char-role">主角 · 前朝锦衣卫遗孤</div><div class="char-desc">沉稳内敛，善于观察。手腕上的神秘铜环是核心能力来源，感知邪气。</div></div>
+              <div class="char-card"><div class="char-name">云霓</div><div class="char-role">重要配角 · 流云阁刺客</div><div class="char-desc">表面狡黠，内心孤独。掌握城中各方势力情报，行事目的不明。</div></div>
+              <div class="char-card" style="opacity:.55"><div class="char-name">老槐</div><div class="char-role">次要角色 · 城中当铺掌柜</div><div class="char-desc">消息灵通，与地下势力有所往来。</div></div>
+              <button class="tbtn" style="font-size:12px;width:100%">+ 添加人物</button>
+            </div>
+          </div>
+          <div class="log-wrap">
+            <div class="log-hdr">代理活动日志</div>
+            <div id="log-body">
+              <div class="lentry"><span class="lt">14:03</span><span><span class="la">情节设计师</span> 分析第 3 章剧情节点，生成叙事骨架</span></div>
+              <div class="lentry"><span class="lt">14:04</span><span><span class="la">奇幻专家</span> 检验世界观一致性（铜环能力边界）</span></div>
+              <div class="lentry"><span class="lt">14:05</span><span><span class="la">文笔编辑</span> 润色开头段落，提升节奏感</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function go(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('sc-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', (name === 'home' && i === 0) || (name === 'config' && i === 1)));
+  if (name === 'config') { curStep = 1; renderStep(); }
+}
+
+let curStep = 1;
+const sNames = ['基本信息','选择体裁','章节结构','AI 模型'];
+function renderStep() {
+  for (let i = 1; i <= 4; i++) {
+    const s = document.getElementById('step' + i);
+    if (s) s.style.display = i === curStep ? 'block' : 'none';
+    const d = document.getElementById('sd' + i);
+    if (d) { d.className = 'sdot ' + (i < curStep ? 'done' : i === curStep ? 'active' : 'idle'); d.textContent = i < curStep ? '✓' : i; }
+    const l = document.getElementById('sl' + i);
+    if (l) l.className = 'sline ' + (i < curStep ? 'done' : '');
+    const lb = document.getElementById('ssl' + i);
+    if (lb) lb.className = 'ssl ' + (i === curStep ? 'active' : '');
+  }
+  document.getElementById('step-top').textContent = `步骤 ${curStep} / 4 · ${sNames[curStep - 1]}`;
+  document.getElementById('btn-prev').style.display = curStep > 1 ? 'block' : 'none';
+  document.getElementById('btn-next').textContent = curStep < 4 ? '下一步 →' : '✦ 开始创作';
+}
+function sNav(d) {
+  const n = curStep + d;
+  if (n < 1) return;
+  if (n > 4) { go('writing'); return; }
+  curStep = n; renderStep();
+}
+function selG(b) { b.closest('.gg').querySelectorAll('.gchip').forEach(c => c.classList.remove('sel')); b.classList.add('sel'); }
+function selS(b) { b.closest('.sopts').querySelectorAll('.sopt').forEach(c => c.classList.remove('sel')); b.classList.add('sel'); }
+function selM(b) { document.querySelectorAll('.mopt').forEach(c => c.classList.remove('sel')); b.classList.add('sel'); }
+function calcTotal() {
+  const ch = +document.getElementById('rng-ch').value || 20;
+  const wpc = +document.getElementById('rng-wpc').value || 3000;
+  const el = document.getElementById('total-p');
+  if (el) el.textContent = (ch * wpc).toLocaleString() + ' 字';
+}
+function updPrev() {
+  const v = document.getElementById('inp-title').value;
+  const el = document.getElementById('prev-title');
+  if (el) el.textContent = v || '未命名小说';
+}
+
+function switchT(btn, id) {
+  btn.closest('.rtabs').querySelectorAll('.rtab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tp').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+const C1 = '那一年的冬天来得比往年都早。<br><br>古城的青石板路上，霜气还未消散，江凌就已经在城门口守了整整一夜。手腕上的铜环在黎明前的寒风里微微颤动，像是感知到了什么。<br><br>他抬起头，看向城楼上那盏最后一盏还亮着的灯。';
+const C2 = '集市总是在混乱中透露出某种秩序。<br><br>江凌站在卖香料的摊位边，眼神却落在三条街之外——一个穿青色衣裙的女子正在飞速穿过人群，身后跟着两个脸色铁青的男人。<br><br>他本不想惹麻烦。但脚已经迈出去了。';
+const C3 = '城中的第七口枯井让江凌起了疑心。<br><br>那口井已经干涸了五年，街坊邻里早就习惯了绕路走，可今天清晨，一个卖豆腐的老汉却在井边发现了一滩猩红——不是血，是某种更黏稠、更深沉的东西，带着一丝隐约的腥甜气。<br><br>他蹲下身，用拇指蹭了一点，凑到鼻尖。手臂上的铜环瞬间发热。<br><br><span class="chv-ph">— AI 正在续写中 —</span>';
+const SUMS = {1:'世界初现，主角江凌在古城意外获得神秘铜环，感知到即将到来的黑暗力量。',2:'江凌在集市遇到神秘女子云霓，两人因追捕刺客而相识。',3:'城中接连发生怪事，江凌开始调查，却发现幕后势力比想象中庞大。'};
+
+function selCh(row, num, title, meta, done) {
+  document.querySelectorAll('.ch-row').forEach(r => r.classList.remove('active'));
+  row.classList.add('active');
+  document.getElementById('chv-title').textContent = `第 ${num} 章 · ${title}`;
+  document.getElementById('chv-meta').textContent = done ? `已完成 · ${meta}` : `目标字数 3,000 · ${meta}`;
+  const st = document.getElementById('chv-status');
+  st.className = 'chs ' + (done ? 'cs-done' : num === 3 ? 'cs-writing' : 'cs-todo');
+  st.textContent = done ? '已完成' : num === 3 ? '创作中' : '待创作';
+  const pct = done ? 100 : num === 3 ? 41 : 0;
+  document.getElementById('chpct').textContent = pct + '%';
+  document.getElementById('chfill').style.width = pct + '%';
+  document.getElementById('chv-body').innerHTML = num === 1 ? C1 : num === 2 ? C2 : num === 3 ? C3 : '<span class="chv-ph">本章尚未创作，点击右上角「生成当前章节」开始。</span>';
+  const s = document.getElementById('ch-sum-text');
+  if (s) s.textContent = SUMS[num] || '本章概要尚未设置。';
+}
+
+let generating = false;
+const LOGS = [
+  ['情节设计师','分析章节叙事节点，识别张力高峰'],
+  ['奇幻专家','核查铜环能力边界与世界观一致性'],
+  ['对话专家','优化人物对话自然度与个性化表达'],
+  ['场景专家','生成城东废弃织布坊环境氛围描写'],
+  ['文笔编辑','节奏把控与语言风格润色'],
+  ['人物设计师','确认江凌行为动机一致性'],
+  ['文学总监','整体叙事弧线最终审核'],
+];
+let li = 0;
+function addLog(a, m) {
+  const b = document.getElementById('log-body'); if (!b) return;
+  const now = new Date();
+  const t = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const e = document.createElement('div'); e.className = 'lentry';
+  e.innerHTML = `<span class="lt">${t}</span><span><span class="la">${a}</span> ${m}</span>`;
+  b.insertBefore(e, b.firstChild);
+  const es = b.querySelectorAll('.lentry'); if (es.length > 7) es[es.length-1].remove();
+}
+function startGen() {
+  if (generating) return; generating = true;
+  const btn = document.getElementById('gen-btn');
+  const txt = document.getElementById('gen-text');
+  const ico = document.getElementById('gen-icon');
+  btn.disabled = true; txt.textContent = '生成中…';
+  ico.innerHTML = '<div class="spinner"></div>';
+  document.querySelectorAll('#a-chips .chip').forEach(c => {
+    c.classList.add('on');
+    if (!c.querySelector('.chipdot')) { const d = document.createElement('div'); d.className = 'chipdot'; c.insertBefore(d, c.firstChild); }
+  });
+  li = 0;
+  const timer = setInterval(() => {
+    if (li < LOGS.length) { addLog(LOGS[li][0], LOGS[li][1]); li++; }
+    else {
+      clearInterval(timer); generating = false;
+      btn.disabled = false; txt.textContent = '开始生成本章';
+      ico.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2l2 4h4l-3.3 2.4 1.3 4L8 10.2 4 12.4l1.3-4L2 6h4z"/></svg>';
+      document.querySelectorAll('#a-chips .chip').forEach(c => c.classList.remove('on'));
+      document.getElementById('chfill').style.width = '100%';
+      document.getElementById('chpct').textContent = '100%';
+      const st = document.getElementById('chv-status'); st.className = 'chs cs-done'; st.textContent = '已完成';
+      document.getElementById('chv-meta').textContent = '已完成 · 3,042 字';
+      document.getElementById('chv-body').innerHTML = '城中的第七口枯井让江凌起了疑心。<br><br>那口井已经干涸了五年，街坊邻里早就习惯了绕路走，可今天清晨，一个卖豆腐的老汉却在井边发现了一滩猩红——不是血，是某种更黏稠、更深沉的东西，带着一丝隐约的腥甜气。<br><br>他蹲下身，用拇指蹭了一点，凑到鼻尖。手臂上的铜环瞬间发热，像是有什么东西被触动了。<br><br>江凌站起身，不动声色地环视四周。老汉已经走远了，青石板路上只剩下他和那滩说不清来历的红。<br><br>三天了。<br><br>他掏出随身携带的小本子，在今日的日期下面写了一个字：<em>井</em>。这是本月的第五处异常。上一次，是城南的一棵百年槐树无故枯死；上上次，是东市一口泡菜坛子里长出了从未见过的白色菌丝。<br><br>没有人注意到这些规律，除了他。';
+      addLog('文学总监', '第 3 章创作完成，共 3,042 字，通过质量审核 ✓');
+    }
+  }, 880);
+}
+</script>
 </body>
 </html>

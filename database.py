@@ -10,13 +10,8 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-
 # 创建SQLAlchemy实例
 db = SQLAlchemy()
-
-# 基础模型
-Base = declarative_base()
 
 class Novel(db.Model):
     """小说项目表"""
@@ -162,10 +157,11 @@ class Chapter(db.Model):
     def update_word_count(self):
         """更新字数统计"""
         if self.content:
-            # 简单的中文字数统计
-            chinese_chars = sum(1 for char in self.content if '\u4e00-\u9fa5' in char)
-            words = len(self.content.split())
-            self.word_count = chinese_chars + words
+            # 正确的中文字数统计：逐字符判断Unicode范围
+            chinese_chars = sum(1 for char in self.content if '\u4e00' <= char <= '\u9fa5')
+            # 非中文单词（英文等）按空格分割计数
+            non_chinese = sum(1 for w in self.content.split() if not any('\u4e00' <= c <= '\u9fa5' for c in w))
+            self.word_count = chinese_chars + non_chinese
 
 class Revision(db.Model):
     """章节修订表"""
@@ -335,8 +331,10 @@ class DatabaseManager:
         """初始化数据库应用"""
         # 配置数据库
         basedir = os.path.abspath(os.path.dirname(__file__))
-        db_path = os.path.join(basedir, 'data', 'genius_writer.db')
-        
+        data_dir = os.path.join(basedir, 'data')
+        os.makedirs(data_dir, exist_ok=True)
+        db_path = os.path.join(data_dir, 'genius_writer.db')
+
         app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {

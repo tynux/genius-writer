@@ -982,9 +982,13 @@ class ConfigPage {
             });
             
             if (response.success) {
-                // 保存小说ID
+                // 保存小说ID到localStorage，供创作页面读取
                 this.currentNovelId = response.novel_id;
-                
+                localStorage.setItem('geniuswriter_novel_id', response.novel_id);
+
+                // 同时把完整配置也持久化一次（确保最新）
+                localStorage.setItem('geniuswriter_config', JSON.stringify(this.configData));
+
                 // 跳转到创作页面
                 window.location.href = '/writing';
             } else {
