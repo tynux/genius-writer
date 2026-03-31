@@ -53,26 +53,36 @@ try:
     from workflows.novel_planning import NovelPlanningWorkflow
     from workflows.chapter_writing import ChapterWritingWorkflow
     logger.info("所有模块导入成功")
+
 except ImportError as e:
     logger.warning(f"部分模块导入失败: {e}")
+
     # 创建虚拟类以便应用能启动
     class GeniusWriterAgentSystem:
         def __init__(self):
             self.agents = []
             self.skills = []
-    
+
     class OpenAIClient:
         def __init__(self, api_key=None):
             self.api_key = api_key
-        
+
         def generate(self, prompt, **kwargs):
             return {"text": f"模拟生成: {prompt[:50]}..."}
-    
+
+    # BUG FIX #4: DeepSeekClient 缺少 api_key 参数，与 OpenAIClient 保持一致
+    class DeepSeekClient:
+        def __init__(self, api_key=None):
+            self.api_key = api_key
+
+        def generate(self, prompt, **kwargs):
+            return {"text": f"模拟生成: {prompt[:50]}..."}
+
     class NovelPlanningWorkflow:
         def __init__(self, agent_system=None, model_clients=None):
             self.agent_system = agent_system
             self.model_clients = model_clients or {}
-        
+
         def execute(self, workflow_data):
             logger.warning("使用模拟的小说规划工作流")
             return {
@@ -81,17 +91,17 @@ except ImportError as e:
                     'title': workflow_data.get('title', '模拟小说'),
                     'genre': workflow_data.get('genre', '都市'),
                     'chapters': [
-                        {'number': i+1, 'title': f'第{i+1}章', 'summary': '模拟章节概要'} 
+                        {'chapter': i+1, 'title': f'第{i+1}章', 'summary': '模拟章节概要'}
                         for i in range(workflow_data.get('chapters', 10))
                     ]
                 }
             }
-    
+
     class ChapterWritingWorkflow:
         def __init__(self, agent_system=None, model_clients=None):
             self.agent_system = agent_system
             self.model_clients = model_clients or {}
-        
+
         def execute(self, workflow_data):
             logger.warning("使用模拟的章节创作工作流")
             return {
@@ -103,7 +113,7 @@ except ImportError as e:
                     'word_count': workflow_data.get('target_words', 3000)
                 }
             }
-    
+
     logger.info("使用模拟模块启动应用")
 
 # 全局实例
@@ -111,37 +121,40 @@ agent_system = None
 model_clients = {}
 workflows = {}
 
+
 def initialize_system():
     """初始化智能体系统和模型客户端"""
     global agent_system, model_clients, workflows
-    
+
     try:
         # 初始化智能体系统
         agent_system = GeniusWriterAgentSystem()
         logger.info(f"智能体系统初始化成功，加载了 {len(agent_system.agents)} 个代理")
-        
+
         # 初始化模型客户端
         openai_key = os.getenv('OPENAI_API_KEY')
         if openai_key and openai_key.startswith('sk-'):
             model_clients['openai'] = OpenAIClient(api_key=openai_key)
             logger.info("OpenAI客户端初始化成功")
-        
+
         deepseek_key = os.getenv('DEEPSEEK_API_KEY')
         if deepseek_key and deepseek_key.startswith('sk-'):
             model_clients['deepseek'] = DeepSeekClient(api_key=deepseek_key)
             logger.info("DeepSeek客户端初始化成功")
-        
+
         # 初始化工作流
         workflows['novel_planning'] = NovelPlanningWorkflow(agent_system, model_clients)
         workflows['chapter_writing'] = ChapterWritingWorkflow(agent_system, model_clients)
         logger.info("工作流系统初始化成功")
-        
+
     except Exception as e:
         logger.error(f"系统初始化失败: {e}")
         # 创建模拟实例
         agent_system = GeniusWriterAgentSystem()
-        model_clients['openai'] = OpenAIClient()
-        model_clients['deepseek'] = DeepSeekClient(api_key='')  # simulated mode
+        # BUG FIX #4: 传入 api_key=None 而非不传参数，避免构造函数报错
+        model_clients['openai'] = OpenAIClient(api_key=None)
+        model_clients['deepseek'] = DeepSeekClient(api_key=None)
+
 
 # 初始化系统
 initialize_system()
@@ -153,49 +166,48 @@ def index():
     """首页"""
     return render_template('index.html')
 
+
 @app.route('/config')
 def config_page():
     """配置页面"""
-    # 使用新的用户体验优化模板
     return render_template('config-ux.html')
+
 
 @app.route('/writing')
 def writing_page():
     """创作页面"""
-    # 使用新的用户体验优化创作控制台
     return render_template('writing-ux.html')
+
 
 @app.route('/history')
 def history_page():
     """历史记录页面"""
     return render_template('history.html')
 
+
 @app.route('/project/<novel_id>')
 def project_page(novel_id):
     """项目详情页面"""
     return render_template('project.html')
 
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """健康检查接口"""
-    # 检查数据库连接状态
     db_status = 'healthy'
     try:
         from database import db
-        # 尝试执行简单查询
         db.session.execute(text('SELECT 1'))
     except Exception as e:
         logger.error(f"数据库连接检查失败: {e}")
         db_status = 'unhealthy'
-    
-    # 检查智能体系统状态
+
     agent_status = 'healthy' if agent_system else 'uninitialized'
-    
-    # 总体状态
+
     overall_status = 'healthy'
     if db_status != 'healthy' or agent_status != 'healthy':
         overall_status = 'degraded'
-    
+
     return jsonify({
         'status': overall_status,
         'timestamp': datetime.now().isoformat(),
@@ -209,6 +221,7 @@ def health_check():
         'models_available': list(model_clients.keys()),
         'workflows_available': list(workflows.keys()),
     })
+
 
 @app.route('/api/config', methods=['GET'])
 def get_config():
@@ -240,19 +253,20 @@ def get_config():
     }
     return jsonify(config)
 
+
 @app.route('/api/novel/plan', methods=['POST'])
 def plan_novel():
     """规划小说"""
     try:
         data = request.json
         logger.info(f"收到小说规划请求: {json.dumps(data, ensure_ascii=False)[:200]}...")
-        
+
         # 验证必要参数
         required_fields = ['title', 'genre', 'chapters', 'words_per_chapter']
         for field in required_fields:
             if field not in data:
                 return jsonify({'success': False, 'error': f'缺少必要参数: {field}'}), 400
-        
+
         # 创建小说记录
         novel_data = {
             'title': data['title'],
@@ -265,25 +279,26 @@ def plan_novel():
             'description': data.get('description', ''),
             'author': data.get('author', '匿名'),
         }
-        
+
         novel = db_manager.create_novel(novel_data)
         if not novel:
             return jsonify({'success': False, 'error': '创建小说记录失败'}), 500
-        
+
         novel_id = novel['id']
-        
+
         # 调用小说规划工作流
         if 'novel_planning' in workflows:
             workflow_data = data.copy()
             workflow_data['novel_id'] = novel_id
             result = workflows['novel_planning'].execute(workflow_data)
-            
+
             # 如果工作流返回大纲，更新章节概要
             if result.get('success') and 'outline' in result:
                 outline = result['outline']
                 if 'chapters' in outline:
                     for chapter_info in outline['chapters']:
-                        chapter_number = chapter_info.get('chapter')
+                        # BUG FIX #1: 工作流返回的键名是 'chapter'（整数），不是 'chapter_number'
+                        chapter_number = chapter_info.get('chapter') or chapter_info.get('chapter_number')
                         if chapter_number:
                             chapter = db_manager.get_chapter_by_number(novel_id, chapter_number)
                             if chapter:
@@ -292,12 +307,11 @@ def plan_novel():
                                     'summary': chapter_info.get('summary', ''),
                                 }
                                 db_manager.update_chapter(chapter['id'], update_data)
-            
+
             result['novel_id'] = novel_id
             result['novel'] = novel
             return jsonify(result)
         else:
-            # 模拟响应
             return jsonify({
                 'success': True,
                 'novel_id': novel_id,
@@ -315,10 +329,11 @@ def plan_novel():
                 },
                 'message': '小说规划完成（数据已保存到数据库）',
             })
-    
+
     except Exception as e:
         logger.error(f"小说规划失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/novel/write-chapter', methods=['POST'])
 def write_chapter():
@@ -326,30 +341,29 @@ def write_chapter():
     try:
         data = request.json
         logger.info(f"收到章节创作请求: {json.dumps(data, ensure_ascii=False)[:200]}...")
-        
+
         # 验证必要参数
         required_fields = ['novel_id', 'chapter_number']
         for field in required_fields:
             if field not in data:
                 return jsonify({'success': False, 'error': f'缺少必要参数: {field}'}), 400
-        
+
         novel_id = data['novel_id']
         chapter_number = data['chapter_number']
-        
+
         # 获取章节记录
         chapter = db_manager.get_chapter_by_number(novel_id, chapter_number)
         if not chapter:
             return jsonify({'success': False, 'error': '章节不存在'}), 404
-        
+
         chapter_id = chapter['id']
-        
+
         # 调用章节创作工作流
         if 'chapter_writing' in workflows:
             workflow_data = data.copy()
             workflow_data['chapter_id'] = chapter_id
             result = workflows['chapter_writing'].execute(workflow_data)
-            
-            # 如果工作流返回章节内容，保存到数据库
+
             if result.get('success') and 'chapter' in result:
                 chapter_result = result['chapter']
                 update_data = {
@@ -360,28 +374,28 @@ def write_chapter():
                     'temperature': data.get('temperature', 0.7),
                     'max_tokens': data.get('max_tokens', 4000),
                 }
-                
                 updated_chapter = db_manager.update_chapter(chapter_id, update_data)
                 if updated_chapter:
                     result['chapter'] = updated_chapter
                     result['message'] = '章节创作完成（内容已保存到数据库）'
-            
             return jsonify(result)
         else:
-            # 模拟响应
             content = data.get('content') or f"这是第{chapter_number}章的内容，基于大纲进行创作。本章大约{data.get('target_words', 3000)}字，故事情节围绕大纲展开。"
-            
+
+            # BUG FIX #2: 用正确的中文字数统计逻辑，而不是 len(content) * 2
+            chinese_chars = sum(1 for char in content if '\u4e00' <= char <= '\u9fa5')
+            non_chinese = sum(1 for w in content.split() if not any('\u4e00' <= c <= '\u9fa5' for c in w))
+            word_count = chinese_chars + non_chinese
+
             update_data = {
                 'title': data.get('title', f'第{chapter_number}章 创作完成'),
                 'content': content,
-                'word_count': len(content) * 2,  # 模拟字数
+                'word_count': word_count,
                 'model_used': data.get('model', 'openai'),
                 'temperature': data.get('temperature', 0.7),
                 'max_tokens': data.get('max_tokens', 4000),
             }
-            
             updated_chapter = db_manager.update_chapter(chapter_id, update_data)
-            
             if updated_chapter:
                 return jsonify({
                     'success': True,
@@ -393,16 +407,16 @@ def write_chapter():
                     'success': False,
                     'error': '保存章节内容失败',
                 })
-    
+
     except Exception as e:
         logger.error(f"章节创作失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/models/list', methods=['GET'])
 def list_models():
     """列出可用模型"""
     available_models = []
-    
     for name, client in model_clients.items():
         if hasattr(client, 'api_key') and client.api_key:
             available_models.append({
@@ -417,8 +431,8 @@ def list_models():
                 'enabled': False,
                 'reason': 'API密钥未配置',
             })
-    
     return jsonify({'models': available_models})
+
 
 @app.route('/api/models/test', methods=['POST'])
 def test_model():
@@ -426,16 +440,14 @@ def test_model():
     try:
         data = request.json
         model_id = data.get('model', 'openai')
-        
+
         if model_id not in model_clients:
             return jsonify({'success': False, 'error': f'模型不存在: {model_id}'})
-        
+
         client = model_clients[model_id]
-        
-        # 简单的测试提示
         test_prompt = "请用一句话回复：你好，世界！"
         response = client.generate(test_prompt, max_tokens=50, temperature=0.5)
-        
+
         if response and 'text' in response:
             return jsonify({
                 'success': True,
@@ -449,17 +461,21 @@ def test_model():
                 'model': model_id,
                 'error': '模型响应格式不正确',
             })
-    
+
     except Exception as e:
         logger.error(f"模型测试失败: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
 
 @app.route('/api/agents/list', methods=['GET'])
 def list_agents():
     """列出所有代理"""
     if agent_system and hasattr(agent_system, 'agents'):
         agents_list = []
-        for agent in agent_system.agents:
+        agents = agent_system.agents
+        # BUG FIX #8: agents 是 Dict[str, Agent]，需要遍历 .values() 得到 Agent 对象
+        agent_iter = agents.values() if isinstance(agents, dict) else agents
+        for agent in agent_iter:
             agents_list.append({
                 'name': getattr(agent, 'name', '未知代理'),
                 'role': getattr(agent, 'role', '未知角色'),
@@ -468,7 +484,6 @@ def list_agents():
             })
         return jsonify({'agents': agents_list})
     else:
-        # 模拟数据
         return jsonify({
             'agents': [
                 {'name': '创意总监', 'role': '总监层', 'description': '负责整体创意方向', 'tier': 1},
@@ -481,6 +496,7 @@ def list_agents():
             ]
         })
 
+
 # ========== 数据库API端点 ==========
 
 @app.route('/api/novels', methods=['GET'])
@@ -490,7 +506,6 @@ def get_novels():
         limit = request.args.get('limit', 50, type=int)
         offset = request.args.get('offset', 0, type=int)
         status = request.args.get('status', None)
-        
         novels = db_manager.list_novels(limit=limit, offset=offset, status=status)
         return jsonify({
             'success': True,
@@ -503,23 +518,21 @@ def get_novels():
         logger.error(f"获取小说列表失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/novels', methods=['POST'])
 def create_novel():
     """创建新小说"""
     try:
         data = request.json
-        
-        # 验证必要参数
         required_fields = ['title', 'genre']
         for field in required_fields:
             if field not in data:
                 return jsonify({'success': False, 'error': f'缺少必要参数: {field}'}), 400
-        
-        # 创建小说
+
         novel_data = db_manager.create_novel(data)
         if not novel_data:
             return jsonify({'success': False, 'error': '创建小说失败'}), 500
-        
+
         return jsonify({
             'success': True,
             'novel': novel_data,
@@ -529,6 +542,7 @@ def create_novel():
         logger.error(f"创建小说失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/novels/<novel_id>', methods=['GET'])
 def get_novel(novel_id):
     """获取小说详情"""
@@ -536,33 +550,25 @@ def get_novel(novel_id):
         novel = db_manager.get_novel(novel_id)
         if not novel:
             return jsonify({'success': False, 'error': '小说不存在'}), 404
-        
-        return jsonify({
-            'success': True,
-            'novel': novel,
-        })
+        return jsonify({'success': True, 'novel': novel})
     except Exception as e:
         logger.error(f"获取小说详情失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/novels/<novel_id>', methods=['PUT'])
 def update_novel(novel_id):
     """更新小说"""
     try:
         data = request.json
-        
         novel = db_manager.update_novel(novel_id, data)
         if not novel:
             return jsonify({'success': False, 'error': '小说不存在或更新失败'}), 404
-        
-        return jsonify({
-            'success': True,
-            'novel': novel,
-            'message': '小说更新成功',
-        })
+        return jsonify({'success': True, 'novel': novel, 'message': '小说更新成功'})
     except Exception as e:
         logger.error(f"更新小说失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/novels/<novel_id>', methods=['DELETE'])
 def delete_novel(novel_id):
@@ -571,14 +577,11 @@ def delete_novel(novel_id):
         success = db_manager.delete_novel(novel_id)
         if not success:
             return jsonify({'success': False, 'error': '小说不存在或删除失败'}), 404
-        
-        return jsonify({
-            'success': True,
-            'message': '小说删除成功',
-        })
+        return jsonify({'success': True, 'message': '小说删除成功'})
     except Exception as e:
         logger.error(f"删除小说失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/novels/<novel_id>/chapters', methods=['GET'])
 def get_novel_chapters(novel_id):
@@ -587,7 +590,6 @@ def get_novel_chapters(novel_id):
         limit = request.args.get('limit', 100, type=int)
         offset = request.args.get('offset', 0, type=int)
         status = request.args.get('status', None)
-        
         chapters = db_manager.list_chapters(novel_id, limit=limit, offset=offset, status=status)
         return jsonify({
             'success': True,
@@ -601,6 +603,7 @@ def get_novel_chapters(novel_id):
         logger.error(f"获取章节列表失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/novels/<novel_id>/chapters/<int:chapter_number>', methods=['GET'])
 def get_chapter(novel_id, chapter_number):
     """获取具体章节"""
@@ -608,39 +611,30 @@ def get_chapter(novel_id, chapter_number):
         chapter = db_manager.get_chapter_by_number(novel_id, chapter_number)
         if not chapter:
             return jsonify({'success': False, 'error': '章节不存在'}), 404
-        
-        return jsonify({
-            'success': True,
-            'chapter': chapter,
-        })
+        return jsonify({'success': True, 'chapter': chapter})
     except Exception as e:
         logger.error(f"获取章节失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/novels/<novel_id>/chapters/<int:chapter_number>', methods=['PUT'])
 def update_chapter(novel_id, chapter_number):
     """更新章节内容"""
     try:
         data = request.json
-        
-        # 获取章节ID
         chapter = db_manager.get_chapter_by_number(novel_id, chapter_number)
         if not chapter:
             return jsonify({'success': False, 'error': '章节不存在'}), 404
-        
-        # 更新章节
+
         updated_chapter = db_manager.update_chapter(chapter['id'], data)
         if not updated_chapter:
             return jsonify({'success': False, 'error': '更新章节失败'}), 500
-        
-        return jsonify({
-            'success': True,
-            'chapter': updated_chapter,
-            'message': '章节更新成功',
-        })
+
+        return jsonify({'success': True, 'chapter': updated_chapter, 'message': '章节更新成功'})
     except Exception as e:
         logger.error(f"更新章节失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/novels/<novel_id>/outline', methods=['GET'])
 def get_novel_outline(novel_id):
@@ -649,10 +643,8 @@ def get_novel_outline(novel_id):
         novel = db_manager.get_novel(novel_id)
         if not novel:
             return jsonify({'success': False, 'error': '小说不存在'}), 404
-        
-        # 获取章节列表
+
         chapters = db_manager.list_chapters(novel_id, limit=1000)
-        
         outline = {
             'title': novel['title'],
             'genre': novel['genre'],
@@ -662,14 +654,11 @@ def get_novel_outline(novel_id):
             'writing_style': novel['writing_style'],
             'chapters': chapters,
         }
-        
-        return jsonify({
-            'success': True,
-            'outline': outline,
-        })
+        return jsonify({'success': True, 'outline': outline})
     except Exception as e:
         logger.error(f"获取小说大纲失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/novels/<novel_id>/progress', methods=['GET'])
 def get_novel_progress(novel_id):
@@ -678,7 +667,7 @@ def get_novel_progress(novel_id):
         novel = db_manager.get_novel(novel_id)
         if not novel:
             return jsonify({'success': False, 'error': '小说不存在'}), 404
-        
+
         return jsonify({
             'success': True,
             'progress': {
@@ -694,68 +683,22 @@ def get_novel_progress(novel_id):
         logger.error(f"获取小说进度失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/novels/<novel_id>/regenerate-outline', methods=['POST'])
-def regenerate_outline(novel_id):
-    """重新生成小说大纲"""
-    try:
-        novel = db_manager.get_novel(novel_id)
-        if not novel:
-            return jsonify({'success': False, 'error': '小说不存在'}), 404
-
-        data = request.json or {}
-
-        if 'novel_planning' in workflows:
-            workflow_data = {
-                'novel_id': novel_id,
-                'title': novel['title'],
-                'genre': novel['genre'],
-                'chapters': novel['chapters_count'],
-                'words_per_chapter': novel['words_per_chapter'],
-                'writing_style': novel.get('writing_style', '通俗性'),
-                'model': data.get('model', novel.get('target_model', 'openai')),
-                'description': novel.get('description', ''),
-            }
-            result = workflows['novel_planning'].execute(workflow_data)
-            result['novel_id'] = novel_id
-            return jsonify(result)
-        else:
-            # 模拟响应
-            chapters = novel['chapters_count']
-            return jsonify({
-                'success': True,
-                'novel_id': novel_id,
-                'outline': {
-                    'summary': f"《{novel['title']}》重新生成的大纲（{novel['genre']}，{chapters}章）",
-                    'chapters': [
-                        {'chapter': i + 1, 'title': f'第{i + 1}章', 'summary': f'第{i + 1}章概要'}
-                        for i in range(chapters)
-                    ],
-                },
-                'message': '大纲重新生成成功',
-            })
-
-    except Exception as e:
-        logger.error(f"重新生成大纲失败: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
 
 @app.route('/api/novels/<novel_id>/export', methods=['GET'])
 def export_novel(novel_id):
     """导出小说"""
     try:
         format_type = request.args.get('format', 'txt')
-        
-        # 获取小说信息
+
         novel = db_manager.get_novel(novel_id)
         if not novel:
             return jsonify({'success': False, 'error': '小说不存在'}), 404
-        
-        # 获取所有章节
+
         chapters = db_manager.list_chapters(novel_id, limit=1000)
-        
+
         if format_type == 'txt':
-            # 生成TXT格式
             content = f"""《{novel['title']}》
+
 作者：{novel['author']}
 类型：{novel['genre']}
 状态：{novel['status']}
@@ -768,50 +711,45 @@ def export_novel(novel_id):
 {novel['description'] or '暂无简介'}
 
 {'='*60}
-
 """
-            
-            # 添加章节内容
-            for chapter in sorted(chapters, key=lambda x: x.get('chapter_number', 0)):
+            # BUG FIX #3: 安全排序，chapter_number 为 None 时用 0 作为默认值，避免 TypeError
+            for chapter in sorted(chapters, key=lambda x: x.get('chapter_number') or 0):
                 content += f"\n第{chapter.get('chapter_number', 0)}章：{chapter.get('title', '')}\n"
                 content += f"{'='*40}\n"
                 content += f"{chapter.get('content', '')}\n\n"
-            
-            # 返回文件
+
             from io import BytesIO
             from flask import make_response
-            
             response = make_response(content)
             response.headers['Content-Type'] = 'text/plain; charset=utf-8'
             response.headers['Content-Disposition'] = f'attachment; filename="{novel["title"]}.txt"'
             return response
-            
+
         elif format_type == 'json':
-            # 生成JSON格式
             export_data = {
                 'novel': novel,
                 'chapters': chapters,
                 'exported_at': datetime.now().isoformat(),
                 'format': 'json'
             }
-            
             return jsonify({
                 'success': True,
                 'data': export_data,
                 'message': '导出成功（JSON格式）'
             })
-        
         else:
             return jsonify({'success': False, 'error': f'不支持的格式: {format_type}'}), 400
-    
+
     except Exception as e:
         logger.error(f"导出小说失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     """提供上传的文件"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 
 # ========== 错误处理 ==========
 
@@ -819,10 +757,12 @@ def uploaded_file(filename):
 def not_found(error):
     return jsonify({'error': '资源不存在'}), 404
 
+
 @app.errorhandler(500)
 def internal_error(error):
     logger.error(f"服务器内部错误: {error}")
     return jsonify({'error': '服务器内部错误'}), 500
+
 
 # ========== 启动应用 ==========
 
@@ -830,9 +770,9 @@ if __name__ == '__main__':
     port = app.config['PORT']
     host = app.config['HOST']
     debug = app.config['DEBUG']
-    
+
     logger.info(f"启动GeniusWriter应用，地址: http://{host}:{port}")
     logger.info(f"调试模式: {debug}")
     logger.info(f"可用模型: {list(model_clients.keys())}")
-    
+
     app.run(host=host, port=port, debug=debug)

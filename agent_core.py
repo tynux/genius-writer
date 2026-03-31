@@ -14,11 +14,13 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
+
 class AgentTier(Enum):
     """代理层级"""
-    TIER1 = 1  # 总监层
-    TIER2 = 2  # 部门主管层  
-    TIER3 = 3  # 专家层
+    TIER1 = 1   # 总监层
+    TIER2 = 2   # 部门主管层
+    TIER3 = 3   # 专家层
+
 
 @dataclass
 class Agent:
@@ -31,9 +33,8 @@ class Agent:
     expertise: List[str] = field(default_factory=list)
     prompt_template: str = ""
     config: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典"""
         return {
             'name': self.name,
             'role': self.role,
@@ -44,6 +45,7 @@ class Agent:
             'config': self.config,
         }
 
+
 @dataclass
 class Skill:
     """技能定义"""
@@ -52,9 +54,8 @@ class Skill:
     description: str = ""
     parameters: Dict[str, Any] = field(default_factory=dict)
     handler: Optional[Callable] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典"""
         return {
             'name': self.name,
             'command': self.command,
@@ -62,28 +63,28 @@ class Skill:
             'parameters': self.parameters,
         }
 
+
 class GeniusWriterAgentSystem:
     """GeniusWriter智能体协调系统"""
-    
+
     def __init__(self, config_path: str = None):
-        """初始化智能体系统"""
         self.config = self.load_config(config_path)
+        # BUG FIX #8: 明确使用 Dict[str, Agent]，app.py 中遍历时用 .values()
         self.agents: Dict[str, Agent] = {}
         self.skills: Dict[str, Skill] = {}
         self.active_projects: Dict[str, Any] = {}
         self.conversation_history: List[Dict] = []
-        
-        # 加载代理和技能
+
         self.load_agents()
         self.load_skills()
-        
+
         logger.info(f"智能体系统初始化完成，加载了 {len(self.agents)} 个代理和 {len(self.skills)} 个技能")
-    
+
     def load_config(self, config_path: str = None) -> Dict[str, Any]:
         """加载配置文件"""
         if config_path is None:
             config_path = os.path.join(os.path.dirname(__file__), 'agent.yaml')
-        
+
         default_config = {
             'system': {
                 'name': 'GeniusWriter',
@@ -101,35 +102,35 @@ class GeniusWriterAgentSystem:
                 'model': 'gpt-4',
             }
         }
-        
+
         if os.path.exists(config_path):
             try:
                 with open(config_path, 'r', encoding='utf-8') as f:
                     loaded_config = yaml.safe_load(f)
-                    default_config.update(loaded_config)
+                default_config.update(loaded_config)
                 logger.info(f"从 {config_path} 加载配置")
             except Exception as e:
-                logger.error(f"加载配置文件失败: {e}")
-        
-        return default_config
-    
+                logger.error(f"加载配置文件失败: {e}，使用默认配置")
+                # BUG FIX #9: 加载失败时也要 return default_config，不能隐式返回 None
+
+        return default_config  # BUG FIX #9: 无论是否成功加载文件，都返回 default_config
+
     def load_agents(self):
         """加载所有代理定义"""
         agents_dir = os.path.join(os.path.dirname(__file__), self.config['paths']['agents'])
-        
+
         if not os.path.exists(agents_dir):
             logger.warning(f"代理目录不存在: {agents_dir}，创建默认代理")
             self.create_default_agents()
             return
-        
+
         for filename in os.listdir(agents_dir):
             if filename.endswith('.yaml') or filename.endswith('.yml'):
                 filepath = os.path.join(agents_dir, filename)
                 try:
                     with open(filepath, 'r', encoding='utf-8') as f:
                         agent_data = yaml.safe_load(f)
-                    
-                    # 创建代理实例
+
                     agent = Agent(
                         name=agent_data.get('name', filename[:-5]),
                         role=agent_data.get('role', ''),
@@ -140,22 +141,19 @@ class GeniusWriterAgentSystem:
                         prompt_template=agent_data.get('prompt_template', ''),
                         config=agent_data.get('config', {}),
                     )
-                    
                     self.agents[agent.name] = agent
                     logger.info(f"加载代理: {agent.name} ({agent.role})")
-                    
                 except Exception as e:
                     logger.error(f"加载代理文件失败 {filename}: {e}")
-        
-        # 如果没加载到任何代理，创建默认代理
+
         if len(self.agents) == 0:
             logger.warning("未加载到任何代理，创建默认代理")
             self.create_default_agents()
-    
+
     def create_default_agents(self):
         """创建默认代理集合"""
         default_agents = [
-            # Tier 1 - 总监层
+            # Tier 1
             Agent(
                 name='creative_director',
                 role='创意总监',
@@ -183,7 +181,7 @@ class GeniusWriterAgentSystem:
                 expertise=['项目管理', '团队协调', '进度控制'],
                 prompt_template="你是一位高效的项目制作人，擅长..."
             ),
-            # Tier 2 - 部门主管层
+            # Tier 2
             Agent(
                 name='plot_designer',
                 role='情节设计师',
@@ -211,7 +209,7 @@ class GeniusWriterAgentSystem:
                 expertise=['世界观构建', '历史背景', '社会结构'],
                 prompt_template="你是一位专业的世界观设计师，擅长..."
             ),
-            # Tier 3 - 专家层
+            # Tier 3
             Agent(
                 name='historical_expert',
                 role='历史小说专家',
@@ -240,45 +238,41 @@ class GeniusWriterAgentSystem:
                 prompt_template="你是一位对话专家，精通..."
             ),
         ]
-        
+
         for agent in default_agents:
             self.agents[agent.name] = agent
-    
+
     def load_skills(self):
         """加载所有技能定义"""
         skills_dir = os.path.join(os.path.dirname(__file__), self.config['paths']['skills'])
-        
+
         if not os.path.exists(skills_dir):
             logger.warning(f"技能目录不存在: {skills_dir}，创建默认技能")
             self.create_default_skills()
             return
-        
+
         for filename in os.listdir(skills_dir):
             if filename.endswith('.yaml') or filename.endswith('.yml'):
                 filepath = os.path.join(skills_dir, filename)
                 try:
                     with open(filepath, 'r', encoding='utf-8') as f:
                         skill_data = yaml.safe_load(f)
-                    
-                    # 创建技能实例
+
                     skill = Skill(
                         name=skill_data.get('name', filename[:-5]),
                         command=skill_data.get('command', ''),
                         description=skill_data.get('description', ''),
                         parameters=skill_data.get('parameters', {}),
                     )
-                    
                     self.skills[skill.name] = skill
                     logger.info(f"加载技能: {skill.name} ({skill.command})")
-                    
                 except Exception as e:
                     logger.error(f"加载技能文件失败 {filename}: {e}")
-        
-        # 如果没加载到任何技能，创建默认技能
+
         if len(self.skills) == 0:
             logger.warning("未加载到任何技能，创建默认技能")
             self.create_default_skills()
-    
+
     def create_default_skills(self):
         """创建默认技能集合"""
         default_skills = [
@@ -330,44 +324,37 @@ class GeniusWriterAgentSystem:
                 }
             ),
         ]
-        
+
         for skill in default_skills:
             self.skills[skill.name] = skill
-    
+
     def get_agent(self, agent_name: str) -> Optional[Agent]:
-        """获取指定代理"""
         return self.agents.get(agent_name)
-    
+
     def get_agents_by_tier(self, tier: AgentTier) -> List[Agent]:
-        """获取指定层级的代理"""
         return [agent for agent in self.agents.values() if agent.tier == tier]
-    
+
     def get_skill(self, skill_name: str) -> Optional[Skill]:
-        """获取指定技能"""
         return self.skills.get(skill_name)
-    
+
     def execute_skill(self, skill_name: str, params: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
         """执行技能"""
         skill = self.get_skill(skill_name)
         if not skill:
             return {'success': False, 'error': f'技能不存在: {skill_name}'}
-        
-        # 验证参数
+
         for param_name, param_config in skill.parameters.items():
             if param_config.get('required', False) and param_name not in params:
                 return {'success': False, 'error': f'缺少必要参数: {param_name}'}
-        
+
         try:
-            # 记录执行历史
             self.conversation_history.append({
                 'type': 'skill_execution',
                 'skill': skill_name,
                 'params': params,
                 'timestamp': self.get_timestamp(),
             })
-            
-            # 这里应该调用实际的技能处理器
-            # 暂时返回模拟结果
+
             result = {
                 'success': True,
                 'skill': skill_name,
@@ -377,34 +364,29 @@ class GeniusWriterAgentSystem:
                     'timestamp': self.get_timestamp(),
                 }
             }
-            
+
             logger.info(f"执行技能: {skill_name}，参数: {params}")
             return result
-            
+
         except Exception as e:
             logger.error(f"执行技能失败 {skill_name}: {e}")
             return {'success': False, 'error': str(e)}
-    
+
     def coordinate_agents(self, task: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """协调多个代理完成任务"""
         logger.info(f"开始协调代理完成任务: {task}")
-        
-        # 根据任务类型选择代理
+
         if 'planning' in task or 'design' in task:
-            # 设计任务需要总监层和部门主管层
             tier1_agents = self.get_agents_by_tier(AgentTier.TIER1)
             tier2_agents = self.get_agents_by_tier(AgentTier.TIER2)
             selected_agents = tier1_agents + tier2_agents
         elif 'writing' in task or 'chapter' in task:
-            # 创作任务需要部门主管层和专家层
             tier2_agents = self.get_agents_by_tier(AgentTier.TIER2)
             tier3_agents = self.get_agents_by_tier(AgentTier.TIER3)
             selected_agents = tier2_agents + tier3_agents
         else:
-            # 默认使用所有代理
             selected_agents = list(self.agents.values())
-        
-        # 模拟协调过程
+
         coordination_result = {
             'success': True,
             'task': task,
@@ -412,22 +394,20 @@ class GeniusWriterAgentSystem:
             'steps': [],
             'result': '代理协调完成（模拟）',
         }
-        
-        # 记录协调历史
+
         self.conversation_history.append({
             'type': 'coordination',
             'task': task,
             'agents': [agent.name for agent in selected_agents],
             'timestamp': self.get_timestamp(),
         })
-        
+
         logger.info(f"协调了 {len(selected_agents)} 个代理完成任务: {task}")
         return coordination_result
-    
+
     def start_project(self, project_name: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """启动新项目"""
         project_id = f"project_{self.get_timestamp()}"
-        
         project = {
             'id': project_id,
             'name': project_name,
@@ -438,54 +418,43 @@ class GeniusWriterAgentSystem:
             'agents_involved': [],
             'progress': 0,
         }
-        
         self.active_projects[project_id] = project
-        
-        # 记录项目启动
+
         self.conversation_history.append({
             'type': 'project_start',
             'project_id': project_id,
             'project_name': project_name,
             'timestamp': self.get_timestamp(),
         })
-        
+
         logger.info(f"启动新项目: {project_name} (ID: {project_id})")
         return project
-    
+
     def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
-        """获取项目信息"""
         return self.active_projects.get(project_id)
-    
+
     def update_project_progress(self, project_id: str, progress: int, status: str = None) -> bool:
-        """更新项目进度"""
         if project_id not in self.active_projects:
             return False
-        
         project = self.active_projects[project_id]
         project['progress'] = progress
         project['updated_at'] = self.get_timestamp()
-        
         if status:
             project['status'] = status
-        
         return True
-    
+
     def get_conversation_history(self, limit: int = 100) -> List[Dict]:
-        """获取对话历史"""
         return self.conversation_history[-limit:] if limit > 0 else self.conversation_history
-    
+
     def clear_conversation_history(self):
-        """清空对话历史"""
         self.conversation_history = []
-    
+
     @staticmethod
     def get_timestamp() -> str:
-        """获取时间戳"""
         from datetime import datetime
         return datetime.now().isoformat()
-    
+
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典表示"""
         return {
             'system': self.config['system'],
             'agents_count': len(self.agents),
@@ -497,6 +466,7 @@ class GeniusWriterAgentSystem:
 
 # 单例实例
 _global_instance = None
+
 
 def get_global_instance(config_path: str = None) -> GeniusWriterAgentSystem:
     """获取全局智能体系统实例"""
