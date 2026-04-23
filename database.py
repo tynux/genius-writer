@@ -506,6 +506,40 @@ class DatabaseManager:
             print(f"列出章节失败: {e}")
             return []
 
+    def create_revision(self, chapter_id, content, changes_summary=None, revised_by='user', reason=None):
+        """创建章节修订版本"""
+        try:
+            # 获取当前最大修订号
+            last_revision = Revision.query.filter_by(chapter_id=chapter_id).order_by(Revision.revision_number.desc()).first()
+            next_number = (last_revision.revision_number + 1) if last_revision else 1
+            
+            revision = Revision(
+                id=_generate_id('rev'),
+                chapter_id=chapter_id,
+                revision_number=next_number,
+                content=content,
+                changes_summary=changes_summary,
+                revised_by=revised_by,
+                reason=reason,
+                created_at=datetime.now()
+            )
+            db.session.add(revision)
+            db.session.commit()
+            return revision.to_dict()
+        except Exception as e:
+            db.session.rollback()
+            print(f"创建修订版本失败: {e}")
+            return None
+
+    def list_revisions(self, chapter_id):
+        """列出章节的所有修订版本"""
+        try:
+            revisions = Revision.query.filter_by(chapter_id=chapter_id).order_by(Revision.revision_number.desc()).all()
+            return [rev.to_dict() for rev in revisions]
+        except Exception as e:
+            print(f"列出修订版本失败: {e}")
+            return []
+
     # ---- 工作流日志 ----
 
     def log_workflow(self, workflow_data):

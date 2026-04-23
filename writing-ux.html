@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创作控制台 - GeniusWriter</title>
+    <link rel="stylesheet" href="/static/css/style-clean.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/static/js/writing-ux.js" defer></script>
+    <style>
+        /* 创作控制台样式 */
+        .writing-console {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 1.5rem;
+            height: calc(100vh - 70px);
+        }
+        
+        /* 章节侧边栏 */
+        .chapter-sidebar {
+            background: var(--color-white);
+            border-radius: 1rem;
+            border: 1px solid var(--color-gray-200);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 1.25rem;
+            background: var(--color-gray-50);
+            border-bottom: 1px solid var(--color-gray-200);
+        }
+        
+        .sidebar-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .chapter-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.75rem;
+        }
+        
+        .chapter-item {
+            padding: 0.875rem 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chapter-item:hover {
+            background: var(--color-gray-50);
+            border-color: var(--color-gray-300);
+        }
+        
+        .chapter-item.active {
+            background: var(--color-primary-light);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+        
+        .chapter-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .chapter-number {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: inherit;
+        }
+        
+        .chapter-title {
+            font-size: 0.8125rem;
+            color: var(--color-gray-600);
+            margin-top: 0.125rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .chapter-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .status-draft { background: var(--color-gray-400); }
+        .status-outline { background: var(--color-blue-500); }
+        .status-writing { background: var(--color-warning); }
+        .status-completed { background: var(--color-success); }
+        .status-reviewing { background: var(--color-purple-500); }
+        
+        .sidebar-footer {
+            padding: 1rem;
+            background: var(--color-gray-50);
+            border-top: 1px solid var(--color-gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* 编辑器区域 */
+        .editor-area {
+            background: var(--color-white);
+            border-radius: 1rem;
+            border: 1px solid var(--color-gray-200);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-header {
+            padding: 1.25rem;
+            background: var(--color-gray-50);
+            border-bottom: 1px solid var(--color-gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .editor-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin: 0;
+        }
+        
+        .editor-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .editor-content {
+            flex: 1;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chapter-editor {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            font-family: var(--font-family-base);
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--color-gray-800);
+            padding: 1.5rem;
+            box-sizing: border-box;
+            background: var(--color-white);
+        }
+        
+        .chapter-editor:focus {
+            outline: none;
+            background: var(--color-white);
+        }
+        
+        .editor-footer {
+            padding: 1rem 1.5rem;
+            background: var(--color-gray-50);
+            border-top: 1px solid var(--color-gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--color-gray-600);
+        }
+        
+        .word-count {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* 状态侧边栏 */
+        .status-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .status-card {
+            background: var(--color-white);
+            border-radius: 1rem;
+            border: 1px solid var(--color-gray-200);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 1.25rem;
+            background: var(--color-gray-50);
+            border-bottom: 1px solid var(--color-gray-200);
+        }
+        
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .card-body {
+            padding: 1.25rem;
+        }
+        
+        /* 进度卡片 */
+        .progress-card {
+            text-align: center;
+        }
+        
+        .progress-ring {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+        
+        .ring-bg {
+            fill: none;
+            stroke: var(--color-gray-200);
+            stroke-width: 8;
+        }
+        
+        .ring-progress {
+            fill: none;
+            stroke: var(--color-primary);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+        }
+        
+        .progress-label {
+            font-size: 0.875rem;
+            color: var(--color-gray-600);
+            margin-top: 0.5rem;
+        }
+        
+        /* 智能体状态 */
+        .agent-status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--color-gray-100);
+        }
+        
+        .agent-status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .agent-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .agent-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            color: var(--color-white);
+            flex-shrink: 0;
+        }
+        
+        .icon-creative { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .icon-literary { background: linear-gradient(135deg, #10b981, #059669); }
+        .icon-producer { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .icon-expert { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        
+        .agent-name {
+            font-weight: 500;
+            color: var(--color-gray-800);
+        }
+        
+        .agent-role {
+            font-size: 0.75rem;
+            color: var(--color-gray-600);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+        }
+        
+        .indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .indicator-active { background: var(--color-success); }
+        .indicator-inactive { background: var(--color-gray-400); }
+        .indicator-working { background: var(--color-warning); animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* 快速操作 */
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        
+        .action-button {
+            padding: 0.875rem;
+            background: var(--color-white);
+            border: 1px solid var(--color-gray-300);
+            border-radius: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        
+        .action-button:hover {
+            background: var(--color-gray-50);
+            border-color: var(--color-gray-400);
+            transform: translateY(-1px);
+        }
+        
+        .action-icon {
+            font-size: 1.25rem;
+            color: var(--color-primary);
+        }
+        
+        .action-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--color-gray-700);
+        }
+        
+        /* 创作统计 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        
+        .stat-item {
+            padding: 0.75rem;
+            background: var(--color-gray-50);
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin-bottom: 0.125rem;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--color-gray-600);
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .writing-console {
+                grid-template-columns: 280px 1fr 320px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .writing-console {
+                grid-template-columns: 1fr;
+                height: auto;
+                gap: 1rem;
+            }
+            
+            .writing-console > * {
+                margin-bottom: 1rem;
+            }
+            
+            .editor-area {
+                min-height: 500px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .quick-actions-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-logo">
+                <i class="fas fa-book-open navbar-logo-icon"></i>
+                <span>GeniusWriter</span>
+            </a>
+            <div class="navbar-nav">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span class="sm-hidden">首页</span>
+                </a>
+                <a href="/config" class="nav-link">
+                    <i class="fas fa-cog"></i>
+                    <span class="sm-hidden">配置</span>
+                </a>
+                <a href="/writing" class="nav-link active">
+                    <i class="fas fa-pen"></i>
+                    <span class="sm-hidden">创作</span>
+                </a>
+                <div class="nav-divider"></div>
+                <button id="toggle-sidebar" class="nav-link">
+                    <i class="fas fa-columns"></i>
+                    <span class="sm-hidden">布局</span>
+                </button>
+                <button id="fullscreen-editor" class="nav-link">
+                    <i class="fas fa-expand"></i>
+                    <span class="sm-hidden">全屏</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 创作控制台 -->
+    <div class="writing-console">
+        <!-- 左侧：章节侧边栏 -->
+        <div class="chapter-sidebar">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">
+                    <i class="fas fa-list-ol"></i>
+                    章节导航
+                </h3>
+            </div>
+            
+            <div class="chapter-list" id="chapter-list">
+                <!-- 章节列表将通过JS动态生成 -->
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-spinner fa-spin mb-2"></i>
+                    <div>加载章节列表...</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div>
+                    <span class="text-sm text-gray-600">共 <span id="total-chapters">0</span> 章</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="add-chapter" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button id="refresh-chapters" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 中间：编辑器区域 -->
+        <div class="editor-area">
+            <div class="editor-header">
+                <div>
+                    <h2 class="editor-title" id="current-chapter-title">第1章：请选择章节</h2>
+                    <div class="text-sm text-gray-600 mt-1">
+                        <span id="chapter-status-display">状态：未开始</span>
+                        <span class="mx-2">•</span>
+                        <span id="chapter-model-display">模型：未选择</span>
+                    </div>
+                </div>
+                <div class="editor-actions">
+                    <button id="save-chapter" class="btn btn-primary btn-sm">
+                        <i class="fas fa-save mr-1"></i>
+                        保存
+                    </button>
+                    <button id="write-chapter" class="btn btn-success btn-sm">
+                        <i class="fas fa-feather mr-1"></i>
+                        创作
+                    </button>
+                </div>
+            </div>
+            
+            <div class="editor-content">
+                <textarea class="chapter-editor" id="chapter-content" 
+                          placeholder="在这里输入或创作章节内容...
+                          
+使用快捷键：
+• Ctrl+S: 保存章节
+• Ctrl+Enter: 开始创作
+• Ctrl+Z: 撤销
+• Ctrl+Shift+Z: 重做"></textarea>
+            </div>
+            
+            <div class="editor-footer">
+                <div class="word-count">
+                    <i class="fas fa-font"></i>
+                    <span id="word-count">0</span> 字
+                    <span class="mx-2">•</span>
+                    <i class="fas fa-clock"></i>
+                    <span id="char-count">0</span> 字符
+                </div>
+                <div>
+                    <span id="auto-save-status" class="text-xs text-gray-500">自动保存已启用</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧：状态侧边栏 -->
+        <div class="status-sidebar">
+            <!-- 进度卡片 -->
+            <div class="status-card progress-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-chart-line"></i>
+                        创作进度
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="progress-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="ring-bg" cx="50" cy="50" r="45"></circle>
+                            <circle class="ring-progress" cx="50" cy="50" r="45" 
+                                    stroke-dasharray="283" stroke-dashoffset="283"></circle>
+                        </svg>
+                        <div class="progress-text" id="progress-percent">0%</div>
+                    </div>
+                    <div class="progress-label" id="progress-label">0/10 章完成</div>
+                    
+                    <div class="mt-4">
+                        <div class="text-sm text-gray-600 mb-1">预计完成时间</div>
+                        <div class="text-lg font-semibold" id="estimated-completion">--:--</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 智能体状态 -->
+            <div class="status-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-robot"></i>
+                        智能体状态
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="space-y-1">
+                        <!-- 智能体状态将通过JS动态生成 -->
+                        <div class="agent-status-item">
+                            <div class="agent-info">
+                                <div class="agent-icon icon-creative">
+                                    <i class="fas fa-palette"></i>
+                                </div>
+                                <div>
+                                    <div class="agent-name">创意总监</div>
+                                    <div class="agent-role">风格指导</div>
+                                </div>
+                            </div>
+                            <div class="status-indicator">
+                                <div class="indicator-dot indicator-active"></div>
+                                <span>就绪</span>
+                            </div>
+                        </div>
+                        
+                        <div class="agent-status-item">
+                            <div class="agent-info">
+                                <div class="agent-icon icon-literary">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                                <div>
+                                    <div class="agent-name">文学总监</div>
+                                    <div class="agent-role">文学质量</div>
+                                </div>
+                            </div>
+                            <div class="status-indicator">
+                                <div class="indicator-dot indicator-active"></div>
+                                <span>就绪</span>
+                            </div>
+                        </div>
+                        
+                        <div class="agent-status-item">
+                            <div class="agent-info">
+                                <div class="agent-icon icon-producer">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div>
+                                    <div class="agent-name">制作人</div>
+                                    <div class="agent-role">项目协调</div>
+                                </div>
+                            </div>
+                            <div class="status-indicator">
+                                <div class="indicator-dot indicator-active"></div>
+                                <span>就绪</span>
+                            </div>
+                        </div>
+                        
+                        <div class="agent-status-item">
+                            <div class="agent-info">
+                                <div class="agent-icon icon-expert">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <div>
+                                    <div class="agent-name">专家团队</div>
+                                    <div class="agent-role">8位专家</div>
+                                </div>
+                            </div>
+                            <div class="status-indicator">
+                                <div class="indicator-dot indicator-active"></div>
+                                <span>就绪</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 快速操作 -->
+            <div class="status-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-bolt"></i>
+                        快速操作
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions-grid">
+                        <button class="action-button" id="quick-outline">
+                            <i class="fas fa-sitemap action-icon"></i>
+                            <span class="action-label">生成大纲</span>
+                        </button>
+                        <button class="action-button" id="quick-quality">
+                            <i class="fas fa-check-circle action-icon"></i>
+                            <span class="action-label">质量检查</span>
+                        </button>
+                        <button class="action-button" id="quick-format">
+                            <i class="fas fa-paint-brush action-icon"></i>
+                            <span class="action-label">自动格式化</span>
+                        </button>
+                        <button class="action-button" id="quick-export">
+                            <i class="fas fa-download action-icon"></i>
+                            <span class="action-label">导出本章</span>
+                        </button>
+                        <button class="action-button" id="quick-feedback">
+                            <i class="fas fa-comment-dots action-icon"></i>
+                            <span class="action-label">获取反馈</span>
+                        </button>
+                        <button class="action-button" id="quick-inspire">
+                            <i class="fas fa-lightbulb action-icon"></i>
+                            <span class="action-label">创作灵感</span>
+                        </button>
+                        <button class="action-button" id="quick-settings">
+                            <i class="fas fa-cog action-icon"></i>
+                            <span class="action-label">配置</span>
+                        </button>
+                        <button class="action-button" id="quick-help">
+                            <i class="fas fa-question action-icon"></i>
+                            <span class="action-label">帮助</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 创作统计 -->
+            <div class="status-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-chart-bar"></i>
+                        创作统计
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-chapters">0</div>
+                            <div class="stat-label">已完成章节</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-words">0</div>
+                            <div class="stat-label">总字数</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-time">0</div>
+                            <div class="stat-label">创作时长(分)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-quality">0%</div>
+                            <div class="stat-label">平均质量</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框容器 -->
+    <div id="modal-container"></div>
+
+    <!-- 底部状态栏 -->
+    <div class="status-bar">
+        <div class="container">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span class="text-sm">系统在线</span>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <span id="current-novel-title">未选择小说</span>
+                        <span class="mx-2">•</span>
+                        <span id="current-model">模型：未选择</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-sm text-gray-600">
+                        最后保存：<span id="last-saved">--:--</span>
+                    </div>
+                    <button id="toggle-console" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-terminal"></i>
+                        控制台
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 基础样式覆盖
+        const style = document.createElement('style');
+        style.textContent = `
+            .status-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: var(--color-white);
+                border-top: 1px solid var(--color-gray-200);
+                padding: 0.5rem 0;
+                z-index: 100;
+            }
+            
+            .status-bar .container {
+                max-width: 100%;
+                padding: 0 1.5rem;
+            }
+            
+            .writing-console {
+                margin-bottom: 60px;
+            }
+            
+            @media (max-width: 992px) {
+                .writing-console {
+                    margin-bottom: 0;
+                }
+                .status-bar {
+                    position: static;
+                    margin-top: 1rem;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -109,11 +109,12 @@ class GeniusWriterAgentSystem:
                     loaded_config = yaml.safe_load(f)
                 default_config.update(loaded_config)
                 logger.info(f"从 {config_path} 加载配置")
+                return default_config
             except Exception as e:
                 logger.error(f"加载配置文件失败: {e}，使用默认配置")
-                # BUG FIX #9: 加载失败时也要 return default_config，不能隐式返回 None
+                return default_config
 
-        return default_config  # BUG FIX #9: 无论是否成功加载文件，都返回 default_config
+        return default_config
 
     def load_agents(self):
         """加载所有代理定义"""

@@ -626,6 +626,15 @@ def update_chapter(novel_id, chapter_number):
         if not chapter:
             return jsonify({'success': False, 'error': '章节不存在'}), 404
 
+        # 如果提供了内容，且与当前内容不同，则创建修订版本
+        if 'content' in data and data['content'] != chapter.get('content'):
+            db_manager.create_revision(
+                chapter_id=chapter['id'],
+                content=chapter.get('content', ''),
+                changes_summary='自动保存',
+                revised_by='user'
+            )
+
         updated_chapter = db_manager.update_chapter(chapter['id'], data)
         if not updated_chapter:
             return jsonify({'success': False, 'error': '更新章节失败'}), 500
@@ -633,6 +642,48 @@ def update_chapter(novel_id, chapter_number):
         return jsonify({'success': True, 'chapter': updated_chapter, 'message': '章节更新成功'})
     except Exception as e:
         logger.error(f"更新章节失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/chapters/<chapter_id>/revisions', methods=['GET'])
+def get_chapter_revisions(chapter_id):
+    """获取章节修订版本列表"""
+    try:
+        revisions = db_manager.list_revisions(chapter_id)
+        return jsonify({'success': True, 'revisions': revisions})
+    except Exception as e:
+        logger.error(f"获取修订版本失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/revisions/<revision_id>/restore', methods=['POST'])
+def restore_revision(revision_id):
+    """恢复到指定的修订版本"""
+    try:
+        # 这里需要 db_manager 支持获取单个修订版本
+        from database import Revision
+        revision = Revision.query.filter_by(id=revision_id).first()
+        if not revision:
+            return jsonify({'success': False, 'error': '修订版本不存在'}), 404
+        
+        # 获取章节
+        chapter_id = revision.chapter_id
+        
+        # 先为当前内容创建一个修订版本
+        from database import Chapter
+        chapter = Chapter.query.filter_by(id=chapter_id).first()
+        if chapter:
+            db_manager.create_revision(
+                chapter_id=chapter_id,
+                content=chapter.content,
+                changes_summary=f'恢复到版本 {revision.revision_number} 前的备份',
+                revised_by='system'
+            )
+            
+            # 更新章节内容
+            db_manager.update_chapter(chapter_id, {'content': revision.content})
+            
+        return jsonify({'success': True, 'message': f'已成功恢复到版本 {revision.revision_number}'})
+    except Exception as e:
+        logger.error(f"恢复修订版本失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -697,32 +748,48 @@ def export_novel(novel_id):
         chapters = db_manager.list_chapters(novel_id, limit=1000)
 
         if format_type == 'txt':
-            content = f"""《{novel['title']}》
-
-作者：{novel['author']}
-类型：{novel['genre']}
-状态：{novel['status']}
-进度：{novel['progress']}%
-总字数：{novel['total_words']}
-创建时间：{novel['created_at']}
-更新时间：{novel['updated_at']}
-
-简介：
-{novel['description'] or '暂无简介'}
-
-{'='*60}
-"""
-            # BUG FIX #3: 安全排序，chapter_number 为 None 时用 0 作为默认值，避免 TypeError
+            content = f"《{novel['title']}》\n\n"
+            content += f"作者：{novel['author']}\n"
+            content += f"类型：{novel['genre']}\n"
+            content += f"状态：{novel['status']}\n"
+            content += f"进度：{novel['progress']}%\n"
+            content += f"总字数：{novel['total_words']}\n"
+            content += f"创建时间：{novel['created_at']}\n"
+            content += f"更新时间：{novel['updated_at']}\n\n"
+            content += f"简介：\n{novel['description'] or '暂无简介'}\n\n"
+            content += "="*60 + "\n"
+            
             for chapter in sorted(chapters, key=lambda x: x.get('chapter_number') or 0):
                 content += f"\n第{chapter.get('chapter_number', 0)}章：{chapter.get('title', '')}\n"
-                content += f"{'='*40}\n"
+                content += "-"*40 + "\n"
                 content += f"{chapter.get('content', '')}\n\n"
 
-            from io import BytesIO
             from flask import make_response
             response = make_response(content)
             response.headers['Content-Type'] = 'text/plain; charset=utf-8'
-            response.headers['Content-Disposition'] = f'attachment; filename="{novel["title"]}.txt"'
+            # 使用 URL 编码处理文件名中的中文字符
+            from urllib.parse import quote
+            filename = quote(f"{novel['title']}.txt")
+            response.headers['Content-Disposition'] = f"attachment; filename*=UTF-8''{filename}"
+            return response
+
+        elif format_type == 'md':
+            content = f"# {novel['title']}\n\n"
+            content += f"- **作者**: {novel['author']}\n"
+            content += f"- **类型**: {novel['genre']}\n"
+            content += f"- **总字数**: {novel['total_words']}\n\n"
+            content += f"## 简介\n\n{novel['description'] or '暂无简介'}\n\n---\n\n"
+            
+            for chapter in sorted(chapters, key=lambda x: x.get('chapter_number') or 0):
+                content += f"## 第{chapter.get('chapter_number', 0)}章：{chapter.get('title', '')}\n\n"
+                content += f"{chapter.get('content', '')}\n\n---\n\n"
+
+            from flask import make_response
+            response = make_response(content)
+            response.headers['Content-Type'] = 'text/markdown; charset=utf-8'
+            from urllib.parse import quote
+            filename = quote(f"{novel['title']}.md")
+            response.headers['Content-Disposition'] = f"attachment; filename*=UTF-8''{filename}"
             return response
 
         elif format_type == 'json':
